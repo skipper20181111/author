@@ -1,0 +1,20 @@
+Name: user-api
+Host: 0.0.0.0
+Port: 8888
+DB:
+  DataSource: admin:konoYES864*^$@tcp(sh-cynosdbmysql-grp-iskwsv0c.sql.tencentcdb.com:23090)/dev?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+Cache:
+  - Host: 49.235.97.223:20004
+    Pass:
+Auth:
+  AccessSecret: ae0536f9-6450-4606-8e13-5a19ed505da0
+  AccessExpire: 172800
+WxConf:
+  Grant_type: authorization_code
+  AppId: wxf840195161361912
+  Secret: 2e1f60095087abb9ee921e4c2265f45b
+RpcConfig:
+  Etcd:
+    Hosts:
+      - 192.168.220.148:2379
+    Key: nmsl
