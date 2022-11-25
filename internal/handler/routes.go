@@ -34,6 +34,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/updateinfo",
 				Handler: myuser.UpdateinfoHandler(serverCtx),
 			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/unbound",
+				Handler: myuser.UnboundHandler(serverCtx),
+			},
 		},
 		rest.WithJwt(serverCtx.Config.Auth.AccessSecret),
 		rest.WithPrefix("/user"),

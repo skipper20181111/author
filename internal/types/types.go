@@ -2,19 +2,18 @@
 package types
 
 type UserInfo struct {
-	NickName   string `json:"nickname"`
-	Avatar     string `json:"avatar"`
-	Gender     int    `json:"gender"`
-	Birthday   string `json:"birthday"`
-	Region     string `json:"region"`
-	Phone      string `json:"phone"`
-	Openid     string `json:"openid"`
-	Wechatbind int    `json:"wechatbind"`
-	Effective  int    `json:"effective"`
+	NickName string `json:"nickname"`
+	Avatar   string `json:"avatar"`
+	Gender   int64  `json:"gender"`
+	Birthday string `json:"birthday"`
+	Region   string `json:"region"`
+	Phone    string `json:"phone"`
+	Openid   string `json:"openid"`
 }
 
 type LoginRes struct {
 	LoginCode string `json:"loginCode"`
+	Phone     string `json:"phone"`
 }
 
 type LoginRp struct {
@@ -47,15 +46,13 @@ type GetUserInfoResp struct {
 }
 
 type UpdateUserInfoRes struct {
-	Openid     string `json:"openid"`
-	NickName   string `json:"nickname"`
-	Avatar     string `json:"avatar"`
-	Gender     int    `json:"gender"`
-	Birthday   string `json:"birthday"`
-	Region     string `json:"region"`
-	Phone      string `json:"phone"`
-	Wechatbind int    `json:"wechatbind"`
-	Effective  int    `json:"effective"`
+	Openid   string `json:"openid"`
+	NickName string `json:"nickname"`
+	Avatar   string `json:"avatar"`
+	Gender   int64  `json:"gender"`
+	Birthday string `json:"birthday"`
+	Region   string `json:"region"`
+	Phone    string `json:"phone"`
 }
 
 type UpdateUserInfoRp struct {
@@ -66,4 +63,17 @@ type UpdateUserInfoResp struct {
 	Code string           `json:"code"`
 	Msg  string           `json:"msg"`
 	Data UpdateUserInfoRp `json:"data"`
+}
+
+type UnboundRp struct {
+	Userinfo     UserInfo `json:"userInfo"`
+	AccessToken  string   `json:"accessToken"`
+	AccessExpire string   `json:"accessExpire"`
+	RefreshAfter string   `json:"refreshAfter"`
+}
+
+type UnboundResp struct {
+	Code string    `json:"code"`
+	Msg  string    `json:"msg"`
+	Data UnboundRp `json:"data"`
 }

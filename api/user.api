@@ -8,20 +8,19 @@ info(
 	version: "1.0"
 )
 type UserInfo {
-	NickName   string `json:"nickname"`
-	Avatar     string `json:"avatar"`
-	Gender     int    `json:"gender"`
-	Birthday   string `json:"birthday"`
-	Region     string `json:"region"`
-	Phone      string `json:"phone"`
-	Openid     string `json:"openid"`
-	Wechatbind int    `json:"wechatbind"`
-	Effective  int    `json:"effective"`
+	NickName string `json:"nickname"`
+	Avatar   string `json:"avatar"`
+	Gender   int64  `json:"gender"`
+	Birthday string `json:"birthday"`
+	Region   string `json:"region"`
+	Phone    string `json:"phone"`
+	Openid   string `json:"openid"`
 }
 
 type (
 	LoginRes {
 		LoginCode string `json:"loginCode"`
+		Phone     string `json:"phone"`
 	}
 	LoginRp {
 		Userinfo     UserInfo `json:"userInfo"`
@@ -53,15 +52,13 @@ type (
 )
 type (
 	UpdateUserInfoRes { // 更新手机号，解绑手机号，注销账号都用这个接口
-		Openid     string `json:"openid"`
-		NickName   string `json:"nickname"`
-		Avatar     string `json:"avatar"`
-		Gender     int    `json:"gender"`
-		Birthday   string `json:"birthday"`
-		Region     string `json:"region"`
-		Phone      string `json:"phone"`
-		Wechatbind int    `json:"wechatbind"`
-		Effective  int    `json:"effective"`
+		Openid   string `json:"openid"`
+		NickName string `json:"nickname"`
+		Avatar   string `json:"avatar"`
+		Gender   int64  `json:"gender"`
+		Birthday string `json:"birthday"`
+		Region   string `json:"region"`
+		Phone    string `json:"phone"`
 	}
 	UpdateUserInfoRp {
 		Userinfo UserInfo `json:"userInfo"`
@@ -70,6 +67,19 @@ type (
 		Code string           `json:"code"`
 		Msg  string           `json:"msg"`
 		Data UpdateUserInfoRp `json:"data"`
+	}
+)
+type (
+	UnboundRp {
+		Userinfo     UserInfo `json:"userInfo"`
+		AccessToken  string   `json:"accessToken"`
+		AccessExpire string   `json:"accessExpire"`
+		RefreshAfter string   `json:"refreshAfter"`
+	}
+	UnboundResp {
+		Code string    `json:"code"`
+		Msg  string    `json:"msg"`
+		Data UnboundRp `json:"data"`
 	}
 )
 @server(
@@ -91,7 +101,7 @@ service user-api {
 
 @server(
 	group: myuser
-	jwt :Auth
+	jwt : Auth
 	prefix : user
 )
 service user-api {
@@ -107,4 +117,11 @@ service user-api {
 	@doc "更新信息"
 	@handler updateinfo
 	post /updateinfo (UpdateUserInfoRes) returns (UpdateUserInfoResp)
+	
+	/*
+	不管更新啥，都要全部传给我
+	*/
+	@doc "更新信息"
+	@handler unbound
+	post /unbound (UpdateUserInfoRes) returns (UnboundResp)
 }

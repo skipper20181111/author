@@ -23,27 +23,15 @@ func NewGetinfoLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetinfoLo
 }
 
 func (l *GetinfoLogic) Getinfo(req *types.GetUserInfoRes) (resp *types.GetUserInfoResp, err error) {
-	if l.ctx.Value("openid") != req.Openid {
+	if l.ctx.Value("openid") != req.Openid || l.ctx.Value("phone") != req.Phone {
 		return &types.GetUserInfoResp{
 			Code: "4004",
 			Msg:  "请勿使用其他用户的token",
 		}, nil
 	}
-	newinfos, err := l.svcCtx.UserModel.FindOneByOpenid(l.ctx, req.Openid)
+	newinfos, err := l.svcCtx.UserModel.FindOneByPhone(l.ctx, req.Phone)
 	if err != nil {
-		newinfoss, err := l.svcCtx.UserModel.FindOneByPhone(l.ctx, req.Phone)
-		if err != nil {
-			return &types.GetUserInfoResp{
-				Code: "4004",
-				Msg:  "未查询到用户信息",
-			}, nil
-		}
-		userinfos := respons(*newinfoss)
-		return &types.GetUserInfoResp{
-			Code: "10000",
-			Msg:  "成功查询用户信息",
-			Data: types.GetUserInfoRp{Userinfo: userinfos},
-		}, nil
+		return &types.GetUserInfoResp{Code: "4004", Msg: "未查询到用户信息"}, nil
 	}
 	userinfo := respons(*newinfos)
 

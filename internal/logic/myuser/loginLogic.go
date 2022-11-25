@@ -5,7 +5,6 @@ import (
 	"author/internal/svc"
 	"author/internal/types"
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
@@ -46,11 +45,12 @@ func NewLoginLogic(ctx context.Context, svcCtx *svc.ServiceContext) *LoginLogic 
 		svcCtx: svcCtx,
 	}
 }
-func (l *LoginLogic) getJwtToken(secretKey string, iat, seconds int64, openid string) (string, error) {
+func (l *LoginLogic) getJwtToken(secretKey string, iat, seconds int64, openid, phone string) (string, error) {
 	claims := make(jwt.MapClaims)
 	claims["exp"] = iat + seconds
 	claims["iat"] = iat
 	claims["openid"] = openid
+	claims["phone"] = phone
 	token := jwt.New(jwt.SigningMethodHS256)
 	token.Claims = claims
 	return token.SignedString([]byte(secretKey))
@@ -63,38 +63,47 @@ func (l *LoginLogic) Login(req *types.LoginRes) (resp *types.LoginResp, err erro
 	   测试状态下，logincode=openid
 	*/
 	wxmsg, err := l.code2Session(req.LoginCode)
-	//wxmsg.Openid = req.LoginCode
+	wxmsg.Openid = req.LoginCode
 	if err != nil || wxmsg.Openid == "" {
 		return &types.LoginResp{Code: "4004", Msg: wxmsg.Errmsg}, nil
 	}
-	infos, err := l.svcCtx.UserModel.FindOneByOpenid(l.ctx, wxmsg.Openid)
+	infos, err := l.svcCtx.UserModel.FindOneByPhone(l.ctx, req.Phone)
 	if err != nil {
 		/*
 		   此时为新用户，需要新建用户，并指示新用户
 		*/
-		l.newuser(wxmsg.Openid)
+		l.newuser(wxmsg.Openid, req.Phone)
 		loginresp.Msg = "返回用户信息"
 		loginresp.Code = "10000"
-		newinfos, _ := l.svcCtx.UserModel.FindOneByOpenid(l.ctx, wxmsg.Openid)
+		newinfos, _ := l.svcCtx.UserModel.FindOneByPhone(l.ctx, req.Phone)
 		userinfo := respons(*newinfos)
-		jwtToken, accessExpire, refreshAfter, _ := l.getToken(wxmsg.Openid)
+		jwtToken, accessExpire, refreshAfter, _ := l.getToken(wxmsg.Openid, req.Phone)
 		loginresp.Data = types.LoginRp{Userinfo: userinfo, IsNew: 1, AccessToken: jwtToken, AccessExpire: strconv.Itoa(int(accessExpire)), RefreshAfter: strconv.Itoa(int(refreshAfter))}
 		return &loginresp, nil
+	}
+	/*
+		此时确定为老用户，但是应当告知是否解绑
+	*/
+	if wxmsg.Openid != infos.Openid {
+		userinfo := respons(*infos)
+		userinfo.Openid = wxmsg.Openid // 这里替换掉原有的openid返回给前端
+		jwtToken, accessExpire, refreshAfter, _ := l.getToken(wxmsg.Openid, req.Phone)
+		return &types.LoginResp{Code: "10000", Msg: "解除绑定", Data: types.LoginRp{Userinfo: userinfo, AccessToken: jwtToken, AccessExpire: strconv.Itoa(int(accessExpire)), RefreshAfter: strconv.Itoa(int(refreshAfter))}}, nil
 	}
 	userinfo := respons(*infos)
 	loginresp.Msg = "登录成功，返回用户信息"
 	loginresp.Code = "10000"
-	jwtToken, accessExpire, refreshAfter, err := l.getToken(wxmsg.Openid)
+	jwtToken, accessExpire, refreshAfter, err := l.getToken(wxmsg.Openid, req.Phone)
 	loginresp.Data = types.LoginRp{Userinfo: userinfo, IsNew: 0, AccessToken: jwtToken, AccessExpire: strconv.Itoa(int(accessExpire)), RefreshAfter: strconv.Itoa(int(refreshAfter))}
 	return &loginresp, nil
 }
-func (l *LoginLogic) getToken(openid string) (jwtToken string, accessExpire int64, refreshAfter int64, err error) {
+func (l *LoginLogic) getToken(openid, phone string) (jwtToken string, accessExpire int64, refreshAfter int64, err error) {
 	// ---start---
 	now := time.Now().Unix()
 	fmt.Println(now)
 	accessExpire = l.svcCtx.Config.Auth.AccessExpire
 	refreshAfter = now + l.svcCtx.Config.Auth.AccessExpire/2
-	jwtToken, err = l.getJwtToken(l.svcCtx.Config.Auth.AccessSecret, now, l.svcCtx.Config.Auth.AccessExpire, openid)
+	jwtToken, err = l.getJwtToken(l.svcCtx.Config.Auth.AccessSecret, now, l.svcCtx.Config.Auth.AccessExpire, openid, phone)
 	if err != nil {
 		return "", 0, 0, err
 	}
@@ -102,20 +111,18 @@ func (l *LoginLogic) getToken(openid string) (jwtToken string, accessExpire int6
 	return jwtToken, accessExpire, refreshAfter, nil
 	// ---end---
 }
-func (l *LoginLogic) newuser(openid string) error {
-	_, err := l.svcCtx.UserModel.Insert(l.ctx, &cachemodel.Userinfos{Openid: openid, Phone: openid, NickName: "蟹蟹", Avatar: "'https://img.waterflowfit.top/img/微信图片_20220925111848.jpg'", Gender: 0, Birthday: "2004-09-01", Region: "静安区", Wechatbind: 0, Effective: 1, CreatedAt: sql.NullTime(ToNullTime(time.Now())), UpdatedAt: sql.NullTime(ToNullTime(time.Now()))})
+func (l *LoginLogic) newuser(openid, phone string) error {
+	_, err := l.svcCtx.UserModel.Insert(l.ctx, &cachemodel.Userinfos{Openid: openid, Phone: phone, NickName: phone, Avatar: "'https://img.waterflowfit.top/img/微信图片_20220925111848.jpg'", Gender: 0, Birthday: "2004-09-01", Region: "静安区"})
 	return err
 }
 func respons(Userinfos cachemodel.Userinfos) (userinfo types.UserInfo) {
-	userinfo.Gender = int(Userinfos.Gender)
+	userinfo.Gender = Userinfos.Gender
 	userinfo.NickName = Userinfos.NickName
 	userinfo.Avatar = Userinfos.Avatar
 	userinfo.Birthday = Userinfos.Birthday
 	userinfo.Region = Userinfos.Region
 	userinfo.Phone = Userinfos.Phone
 	userinfo.Openid = Userinfos.Openid
-	userinfo.Wechatbind = int(Userinfos.Wechatbind)
-	userinfo.Effective = int(Userinfos.Effective)
 	return userinfo
 }
 func (l *LoginLogic) code2Session(code string) (wxLogMsg code2sess, err error) {

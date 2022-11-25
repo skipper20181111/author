@@ -25,7 +25,7 @@ func NewUpdateinfoLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Update
 }
 
 func (l *UpdateinfoLogic) Updateinfo(req *types.UpdateUserInfoRes) (resp *types.UpdateUserInfoResp, err error) {
-	if l.ctx.Value("openid") != req.Openid {
+	if l.ctx.Value("openid") != req.Openid || l.ctx.Value("phone") != req.Phone {
 		return &types.UpdateUserInfoResp{
 			Code: "4004",
 			Msg:  "请勿使用其他用户的token",
@@ -33,25 +33,23 @@ func (l *UpdateinfoLogic) Updateinfo(req *types.UpdateUserInfoRes) (resp *types.
 	}
 	var Userinfos cachemodel.Userinfos
 	Userinfos = info2infos(req)
-	err = l.svcCtx.UserModel.UpdateByOpenid(l.ctx, &Userinfos)
+	err = l.svcCtx.UserModel.UpdateByPhone(l.ctx, req.Phone, &Userinfos)
 	if err != nil {
 		print(err)
 		return &types.UpdateUserInfoResp{Code: "4004", Msg: "修改失败"}, nil
 	}
-	infos, err := l.svcCtx.UserModel.FindOneByOpenid(l.ctx, req.Openid)
+	infos, err := l.svcCtx.UserModel.FindOneByPhone(l.ctx, req.Phone)
 	info := respons(*infos)
 
 	return &types.UpdateUserInfoResp{Code: "10000", Msg: "修改成功", Data: types.UpdateUserInfoRp{Userinfo: info}}, nil
 }
 func info2infos(userinfo *types.UpdateUserInfoRes) (Userinfos cachemodel.Userinfos) {
-	Userinfos.Gender = int64(userinfo.Gender)
+	Userinfos.Gender = userinfo.Gender
 	Userinfos.NickName = userinfo.NickName
 	Userinfos.Avatar = userinfo.Avatar
 	Userinfos.Birthday = userinfo.Birthday
 	Userinfos.Region = userinfo.Region
 	Userinfos.Phone = userinfo.Phone
 	Userinfos.Openid = userinfo.Openid
-	Userinfos.Wechatbind = int64(userinfo.Wechatbind)
-	Userinfos.Effective = int64(userinfo.Effective)
 	return Userinfos
 }
