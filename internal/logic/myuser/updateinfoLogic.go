@@ -40,7 +40,7 @@ func (l *UpdateinfoLogic) Updateinfo(req *types.UpdateUserInfoRes) (resp *types.
 	}
 	infos, err := l.svcCtx.UserModel.FindOneByPhone(l.ctx, req.Phone)
 	info := respons(*infos)
-
+	UserBehaviour(l.ctx, l.svcCtx, "更新用户信息", req.Phone)
 	return &types.UpdateUserInfoResp{Code: "10000", Msg: "修改成功", Data: types.UpdateUserInfoRp{Userinfo: info}}, nil
 }
 func info2infos(userinfo *types.UpdateUserInfoRes) (Userinfos cachemodel.Userinfos) {

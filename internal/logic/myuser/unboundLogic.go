@@ -45,6 +45,7 @@ func (l *UnboundLogic) Unbound(req *types.UpdateUserInfoRes) (resp *types.Unboun
 	infos, err := l.svcCtx.UserModel.FindOneByPhone(l.ctx, req.Phone)
 	info := respons(*infos)
 	jwtToken, accessExpire, refreshAfter, _ := l.getToken(info.Openid, info.Phone)
+	UserBehaviour(l.ctx, l.svcCtx, "绑定新的微信号", req.Phone)
 	return &types.UnboundResp{Code: "10000", Msg: "修改成功", Data: types.UnboundRp{Userinfo: info, AccessToken: jwtToken, AccessExpire: strconv.Itoa(int(accessExpire)), RefreshAfter: strconv.Itoa(int(refreshAfter))}}, nil
 
 }

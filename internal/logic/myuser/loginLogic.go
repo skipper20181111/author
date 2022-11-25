@@ -35,15 +35,20 @@ type NullTime struct {
 	Valid bool
 }
 
-func ToNullTime(t time.Time) NullTime {
-	return NullTime{Time: t, Valid: !t.IsZero()}
-}
 func NewLoginLogic(ctx context.Context, svcCtx *svc.ServiceContext) *LoginLogic {
 	return &LoginLogic{
 		Logger: logx.WithContext(ctx),
 		ctx:    ctx,
 		svcCtx: svcCtx,
 	}
+}
+func ToNullTime(t time.Time) NullTime {
+	return NullTime{Time: t, Valid: !t.IsZero()}
+}
+func UserBehaviour(ctx context.Context, svcCtx *svc.ServiceContext, behaviour, phone string) error {
+	nowtime := time.Now()
+	_, err := svcCtx.UserBehaviourModel.Insert(ctx, &cachemodel.UserBehaviourLog{Behaviour: behaviour, Phone: phone, Date: nowtime})
+	return err
 }
 func (l *LoginLogic) getJwtToken(secretKey string, iat, seconds int64, openid, phone string) (string, error) {
 	claims := make(jwt.MapClaims)
@@ -63,7 +68,7 @@ func (l *LoginLogic) Login(req *types.LoginRes) (resp *types.LoginResp, err erro
 	   测试状态下，logincode=openid
 	*/
 	wxmsg, err := l.code2Session(req.LoginCode)
-	wxmsg.Openid = req.LoginCode
+	//wxmsg.Openid = req.LoginCode
 	if err != nil || wxmsg.Openid == "" {
 		return &types.LoginResp{Code: "4004", Msg: wxmsg.Errmsg}, nil
 	}
@@ -79,6 +84,7 @@ func (l *LoginLogic) Login(req *types.LoginRes) (resp *types.LoginResp, err erro
 		userinfo := respons(*newinfos)
 		jwtToken, accessExpire, refreshAfter, _ := l.getToken(wxmsg.Openid, req.Phone)
 		loginresp.Data = types.LoginRp{Userinfo: userinfo, IsNew: 1, AccessToken: jwtToken, AccessExpire: strconv.Itoa(int(accessExpire)), RefreshAfter: strconv.Itoa(int(refreshAfter))}
+		UserBehaviour(l.ctx, l.svcCtx, "新建用户", userinfo.Phone)
 		return &loginresp, nil
 	}
 	/*
@@ -95,6 +101,7 @@ func (l *LoginLogic) Login(req *types.LoginRes) (resp *types.LoginResp, err erro
 	loginresp.Code = "10000"
 	jwtToken, accessExpire, refreshAfter, err := l.getToken(wxmsg.Openid, req.Phone)
 	loginresp.Data = types.LoginRp{Userinfo: userinfo, IsNew: 0, AccessToken: jwtToken, AccessExpire: strconv.Itoa(int(accessExpire)), RefreshAfter: strconv.Itoa(int(refreshAfter))}
+	UserBehaviour(l.ctx, l.svcCtx, "用户登录", userinfo.Phone)
 	return &loginresp, nil
 }
 func (l *LoginLogic) getToken(openid, phone string) (jwtToken string, accessExpire int64, refreshAfter int64, err error) {

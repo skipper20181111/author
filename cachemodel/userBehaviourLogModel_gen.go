@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/zeromicro/go-zero/core/stores/builder"
 	"github.com/zeromicro/go-zero/core/stores/cache"
@@ -38,10 +39,10 @@ type (
 	}
 
 	UserBehaviourLog struct {
-		Id        int64          `db:"id"`
-		Phone     sql.NullString `db:"phone"`
-		Behaviour sql.NullString `db:"behaviour"`
-		Date      sql.NullTime   `db:"date"`
+		Id        int64     `db:"id"`
+		Phone     string    `db:"phone"`
+		Behaviour string    `db:"behaviour"`
+		Date      time.Time `db:"date"`
 	}
 )
 
