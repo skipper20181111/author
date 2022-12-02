@@ -1,10 +1,13 @@
 package myuser
 
 import (
-	"author/cachemodel"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -28,22 +31,27 @@ func NewUnboundLogic(ctx context.Context, svcCtx *svc.ServiceContext) *UnboundLo
 	}
 }
 
-func (l *UnboundLogic) Unbound(req *types.UpdateUserInfoRes) (resp *types.UnboundResp, err error) {
+func (l *UnboundLogic) Unbound(req *types.LoginRes) (resp *types.UnboundResp, err error) {
 	if l.ctx.Value("phone") != req.Phone {
 		return &types.UnboundResp{
 			Code: "4004",
 			Msg:  "请勿使用其他用户的token",
 		}, nil
 	}
-	var Userinfos cachemodel.Userinfos
-	Userinfos = info2infos(req)
-	err = l.svcCtx.UserModel.UpdateByPhone(l.ctx, req.Phone, &Userinfos)
+	wxmsg, err := l.code2Session(req.LoginCode)
+	if err != nil || wxmsg.Openid == "" {
+		return &types.UnboundResp{Code: "4004", Msg: wxmsg.Errmsg}, nil
+	}
+	infos, err := l.svcCtx.UserModel.FindOneByPhone(l.ctx, req.Phone)
+	infos.Openid = wxmsg.Openid
+
+	err = l.svcCtx.UserModel.UpdateByPhone(l.ctx, req.Phone, infos)
 	if err != nil {
 		print(err)
 		return &types.UnboundResp{Code: "4004", Msg: "修改失败"}, nil
 	}
-	infos, err := l.svcCtx.UserModel.FindOneByPhone(l.ctx, req.Phone)
-	info := respons(*infos)
+	newinfos, err := l.svcCtx.UserModel.FindOneByPhone(l.ctx, req.Phone)
+	info := respons(*newinfos)
 	jwtToken, accessExpire, refreshAfter, _ := l.getToken(info.Openid, info.Phone)
 	UserBehaviour(l.ctx, l.svcCtx, "绑定新的微信号", req.Phone)
 	return &types.UnboundResp{Code: "10000", Msg: "修改成功", Data: types.UnboundRp{Userinfo: info, AccessToken: jwtToken, AccessExpire: strconv.Itoa(int(accessExpire)), RefreshAfter: strconv.Itoa(int(refreshAfter))}}, nil
@@ -72,4 +80,31 @@ func (l *UnboundLogic) getJwtToken(secretKey string, iat, seconds int64, openid,
 	token := jwt.New(jwt.SigningMethodHS256)
 	token.Claims = claims
 	return token.SignedString([]byte(secretKey))
+}
+func (l *UnboundLogic) code2Session(code string) (wxLogMsg code2sess, err error) {
+	var res code2sess
+	params := url.Values{}
+	Url, err := url.Parse("https://api.weixin.qq.com/sns/jscode2session")
+	if err != nil {
+		return res, err
+	}
+
+	params.Set("appid", l.svcCtx.Config.WxConf.AppId)
+	params.Set("secret", l.svcCtx.Config.WxConf.Secret)
+	params.Set("js_code", code)
+	params.Set("grant_type", l.svcCtx.Config.WxConf.Grant_type)
+	//如果参数中有中文参数,这个方法会进行URLEncode
+	Url.RawQuery = params.Encode()
+	urlPath := Url.String()
+	fmt.Println(urlPath) // https://httpbin.org/get?age=23&name=zhaofan
+	resp, err := http.Get(urlPath)
+	if err != nil {
+		return res, err
+	}
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println(string(body))
+	json.Unmarshal(body, &res)
+	fmt.Println(res)
+	return res, nil
 }
