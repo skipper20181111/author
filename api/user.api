@@ -123,5 +123,5 @@ service user-api {
 	*/
 	@doc "更新信息"
 	@handler unbound
-	post /unbound (UpdateUserInfoRes) returns (UnboundResp)
+	post /unbound (LoginRes) returns (UnboundResp)
 }
