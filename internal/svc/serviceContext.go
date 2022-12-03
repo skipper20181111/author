@@ -10,6 +10,7 @@ type ServiceContext struct {
 	Config             config.Config
 	UserModel          cachemodel.UserinfosModel
 	UserBehaviourModel cachemodel.UserBehaviourLogModel
+	AccessTokenModel   cachemodel.AccessTokenModel
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -17,5 +18,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Config:             c,
 		UserModel:          cachemodel.NewUserinfosModel(sqlx.NewMysql(c.DB.DataSource), c.Cache),
 		UserBehaviourModel: cachemodel.NewUserBehaviourLogModel(sqlx.NewMysql(c.DB.DataSource), c.Cache),
+		AccessTokenModel:   cachemodel.NewAccessTokenModel(sqlx.NewMysql(c.DB.DataSource)),
 	}
 }

@@ -1,24 +1,24 @@
-package myuser
+package refresh
 
 import (
 	"net/http"
 
-	"author/internal/logic/myuser"
+	"author/internal/logic/refresh"
 	"author/internal/svc"
 	"author/internal/types"
 	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
-func LoginHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
+func RefreshatHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req types.GetPhoneRes
+		var req types.RefreshRes
 		if err := httpx.Parse(r, &req); err != nil {
 			httpx.Error(w, err)
 			return
 		}
 
-		l := myuser.NewLoginLogic(r.Context(), svcCtx)
-		resp, err := l.Login(&req)
+		l := refresh.NewRefreshatLogic(r.Context(), svcCtx)
+		resp, err := l.Refreshat(&req)
 		if err != nil {
 			httpx.Error(w, err)
 		} else {

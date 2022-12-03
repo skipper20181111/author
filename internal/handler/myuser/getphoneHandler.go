@@ -9,16 +9,16 @@ import (
 	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
-func LoginHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
+func GetphoneHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req types.GetPhoneRes
+		var req types.LoginRes
 		if err := httpx.Parse(r, &req); err != nil {
 			httpx.Error(w, err)
 			return
 		}
 
-		l := myuser.NewLoginLogic(r.Context(), svcCtx)
-		resp, err := l.Login(&req)
+		l := myuser.NewGetphoneLogic(r.Context(), svcCtx)
+		resp, err := l.Getphone(&req)
 		if err != nil {
 			httpx.Error(w, err)
 		} else {

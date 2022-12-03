@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	myuser "author/internal/handler/myuser"
+	refresh "author/internal/handler/refresh"
 	"author/internal/svc"
 
 	"github.com/zeromicro/go-zero/rest"
@@ -15,8 +16,24 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 		[]rest.Route{
 			{
 				Method:  http.MethodPost,
+				Path:    "/refreshat",
+				Handler: refresh.RefreshatHandler(serverCtx),
+			},
+		},
+		rest.WithPrefix("/refresh"),
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				Method:  http.MethodPost,
 				Path:    "/login",
 				Handler: myuser.LoginHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/getphone",
+				Handler: myuser.GetphoneHandler(serverCtx),
 			},
 		},
 		rest.WithPrefix("/user"),

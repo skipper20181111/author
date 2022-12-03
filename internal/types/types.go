@@ -77,3 +77,26 @@ type UnboundResp struct {
 	Msg  string    `json:"msg"`
 	Data UnboundRp `json:"data"`
 }
+
+type RefreshRes struct {
+	Force bool `json:"force"`
+}
+
+type RefreshResp struct {
+	Code string `json:"code"`
+	Msg  string `json:"msg"`
+}
+
+type GetPhoneRes struct {
+	PhoneCode string `json:"phoneCode"`
+}
+
+type GetPhoneRp struct {
+	Phone string `json:"phone"`
+}
+
+type GetPhoneResp struct {
+	Code string      `json:"code"`
+	Msg  string      `json:"msg"`
+	Data *GetPhoneRp `json:"data"`
+}

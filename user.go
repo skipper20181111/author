@@ -4,10 +4,14 @@ import (
 	"author/internal/config"
 	"author/internal/handler"
 	"author/internal/svc"
+	"context"
 	"flag"
 	"fmt"
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/rest"
+	"github.com/zeromicro/go-zero/rest/httpc"
+	"net/http"
+	"time"
 )
 
 var configFile = flag.String("f", "etc/user-api.yaml", "the config file")
@@ -23,7 +27,26 @@ func main() {
 
 	ctx := svc.NewServiceContext(c)
 	handler.RegisterHandlers(server, ctx)
-
+	go refresscache()
 	fmt.Printf("Starting server at %s:%d...\n", c.Host, c.Port)
 	server.Start()
+}
+func refresscache() {
+	for true {
+		fmt.Println("开始刷新")
+		time.Sleep(time.Second * 3)
+		urlPath := "http://localhost:8888/refresh/refreshat"
+		data := ForceRefresh{Force: false}
+		resp, err := httpc.Do(context.Background(), http.MethodPost, urlPath, data)
+		if err != nil {
+			fmt.Println(err, "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+		}
+		fmt.Println(resp.Body.Close())
+		fmt.Println("结束刷新")
+		time.Sleep(time.Second * 50)
+	}
+}
+
+type ForceRefresh struct {
+	Force bool `json:"force"`
 }

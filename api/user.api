@@ -82,21 +82,48 @@ type (
 		Data UnboundRp `json:"data"`
 	}
 )
+type (
+	RefreshRes {
+		Force bool `json:"force"`
+	}
+	RefreshResp {
+		Code string `json:"code"`
+		Msg  string `json:"msg"`
+	}
+	GetPhoneRes {
+		PhoneCode string `json:"phoneCode"`
+	}
+	GetPhoneRp {
+		Phone string `json:"phone"`
+	}
+	GetPhoneResp {
+		Code string      `json:"code"`
+		Msg  string      `json:"msg"`
+		Data *GetPhoneRp `json:"data"`
+	}
+)
+@server(
+	group: refresh
+	prefix : refresh
+)
+service user-api {
+	@doc "刷新access_token"
+	@handler refreshat
+	post /refreshat (RefreshRes) returns (GetPhoneResp)
+}
+
 @server(
 	group: myuser
 	prefix : user
-	//    middleware : Limit_count
-	
 )
 service user-api {
 	@doc "登录"
 	@handler login
-	post /login (LoginRes) returns (LoginResp)
-	/*
-	成功登录返回Code="10000"，Msg="登录成功，返回用户信息"
-	调用wx登录接口失败返回{Code: "4004",Msg: 微信错误信息}
+	post /login (GetPhoneRes) returns (LoginResp)
 	
-	*/
+	@doc "获取手机号"
+	@handler getphone
+	post /getphone (LoginRes) returns (LoginResp)
 }
 
 @server(
