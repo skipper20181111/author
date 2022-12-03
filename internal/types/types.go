@@ -92,11 +92,30 @@ type GetPhoneRes struct {
 }
 
 type GetPhoneRp struct {
-	Phone string `json:"phone"`
+	Phone       string `json:"phone"`
+	CountryCode string `json:"countryCode"`
 }
 
 type GetPhoneResp struct {
 	Code string      `json:"code"`
 	Msg  string      `json:"msg"`
 	Data *GetPhoneRp `json:"data"`
+}
+
+type WaterMark struct {
+	Timestamp int64  `json:"timestamp"`
+	Appid     string `json:"appid"`
+}
+
+type PhoneInfo struct {
+	PhoneNumber     string     `json:"phoneNumber"`
+	PurePhoneNumber string     `json:"purePhoneNumber"`
+	CountryCode     string     `json:"countryCode"`
+	Watermark       *WaterMark `json:"watermark"`
+}
+
+type PhoneStruct struct {
+	Errcode   int        `json:"errcode"`
+	Errmsg    string     `json:"errmsg"`
+	Phoneinfo *PhoneInfo `json:"phone_info"`
 }

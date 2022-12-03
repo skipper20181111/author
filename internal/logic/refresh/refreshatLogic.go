@@ -17,7 +17,7 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-const tockenid = 1
+const Tockenid = 1
 
 type RefreshatLogic struct {
 	logx.Logger
@@ -40,17 +40,17 @@ func (l *RefreshatLogic) Refreshat(req *types.RefreshRes) (resp *types.RefreshRe
 		if err != nil {
 			return &types.RefreshResp{Code: "4004", Msg: refresh.Errmsg}, nil
 		}
-		l.svcCtx.AccessTokenModel.Update(l.ctx, &cachemodel.AccessToken{Id: tockenid, Token: refresh.AccessToken, Time: time.Now()})
+		l.svcCtx.AccessTokenModel.Update(l.ctx, &cachemodel.AccessToken{Id: Tockenid, Token: refresh.AccessToken, Time: time.Now()})
 		return &types.RefreshResp{Code: "10000", Msg: "刷新成功"}, nil
 	}
-	one, err := l.svcCtx.AccessTokenModel.FindOne(l.ctx, tockenid)
+	one, err := l.svcCtx.AccessTokenModel.FindOne(l.ctx, Tockenid)
 	past := -one.Time.Sub(time.Now()).Seconds()
 	if (past*past)/36000000.1 > rand.Float64() {
 		refresh, err := l.refresh()
 		if err != nil {
 			return &types.RefreshResp{Code: "4004", Msg: refresh.Errmsg}, nil
 		}
-		l.svcCtx.AccessTokenModel.Update(l.ctx, &cachemodel.AccessToken{Id: tockenid, Token: refresh.AccessToken, Time: time.Now()})
+		l.svcCtx.AccessTokenModel.Update(l.ctx, &cachemodel.AccessToken{Id: Tockenid, Token: refresh.AccessToken, Time: time.Now()})
 		return &types.RefreshResp{Code: "10000", Msg: "刷新成功"}, nil
 	}
 	return &types.RefreshResp{Code: "10000", Msg: "下次再说"}, nil

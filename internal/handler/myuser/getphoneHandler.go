@@ -11,7 +11,7 @@ import (
 
 func GetphoneHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req types.LoginRes
+		var req types.GetPhoneRes
 		if err := httpx.Parse(r, &req); err != nil {
 			httpx.Error(w, err)
 			return

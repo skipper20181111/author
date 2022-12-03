@@ -94,7 +94,8 @@ type (
 		PhoneCode string `json:"phoneCode"`
 	}
 	GetPhoneRp {
-		Phone string `json:"phone"`
+		Phone       string `json:"phone"`
+		CountryCode string `json:"countryCode"`
 	}
 	GetPhoneResp {
 		Code string      `json:"code"`
@@ -102,6 +103,25 @@ type (
 		Data *GetPhoneRp `json:"data"`
 	}
 )
+
+type (
+	WaterMark {
+		Timestamp int64  `json:"timestamp"`
+		Appid     string `json:"appid"`
+	}
+	PhoneInfo {
+		PhoneNumber     string     `json:"phoneNumber"`
+		PurePhoneNumber string     `json:"purePhoneNumber"`
+		CountryCode     string     `json:"countryCode"`
+		Watermark       *WaterMark `json:"watermark"`
+	}
+	PhoneStruct {
+		Errcode   int        `json:"errcode"`
+		Errmsg    string     `json:"errmsg"`
+		Phoneinfo *PhoneInfo `json:"phone_info"`
+	}
+)
+
 @server(
 	group: refresh
 	prefix : refresh
@@ -119,11 +139,11 @@ service user-api {
 service user-api {
 	@doc "登录"
 	@handler login
-	post /login (GetPhoneRes) returns (LoginResp)
+	post /login (LoginRes) returns (LoginResp)
 	
 	@doc "获取手机号"
 	@handler getphone
-	post /getphone (LoginRes) returns (LoginResp)
+	post /getphone (GetPhoneRes) returns (GetPhoneResp)
 }
 
 @server(
