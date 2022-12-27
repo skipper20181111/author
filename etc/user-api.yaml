@@ -2,9 +2,9 @@ Name: user-api
 Host: 0.0.0.0
 Port: 8888
 DB:
-  DataSource: admin:konoYES864*^$@tcp(sh-cynosdbmysql-grp-iskwsv0c.sql.tencentcdb.com:23090)/dev?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+  DataSource: ${Dbhost}
 Cache:
-  - Host: 49.235.97.223:20004
+  - Host: ${redishost}
     Pass:
 Auth:
   AccessSecret: ae0536f9-6450-4606-8e13-5a19ed505da0
