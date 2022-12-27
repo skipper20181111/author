@@ -7,7 +7,7 @@ Cache:
   - Host: ${redishost}
     Pass:
 Auth:
-  AccessSecret: ae0536f9-6450-4606-8e13-5a19ed505da0
+  AccessSecret: qXTj90Mb3cWlKas9GZ96EjJRin8M5rG66cbo83a0V2jZCR3csXOHXk6HXb022CXboYZZr3Zbs3b17TsgBdRreYaPuI7QDKiwUgzxetcLFvtp9WrNipUCqpRISaeUsSwt
   AccessExpire: 172800
 WxConf:
   Grant_type: authorization_code
