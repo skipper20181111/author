@@ -2,9 +2,9 @@ Name: user-api
 Host: 0.0.0.0
 Port: 8888
 DB:
-  DataSource: ${Dbhost}
+  DataSource: ${DbHost}
 Cache:
-  - Host: ${redishost}
+  - Host: ${RedisHost}
     Pass:
 Auth:
   AccessSecret: qXTj90Mb3cWlKas9GZ96EjJRin8M5rG66cbo83a0V2jZCR3csXOHXk6HXb022CXboYZZr3Zbs3b17TsgBdRreYaPuI7QDKiwUgzxetcLFvtp9WrNipUCqpRISaeUsSwt
