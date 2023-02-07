@@ -30,7 +30,7 @@ func (l *GetinfoLogic) Getinfo(req *types.GetUserInfoRes) (resp *types.GetUserIn
 		}, nil
 	}
 	newinfos, err := l.svcCtx.UserModel.FindOneByPhone(l.ctx, req.Phone)
-	if err != nil {
+	if newinfos == nil {
 		return &types.GetUserInfoResp{Code: "4004", Msg: "未查询到用户信息"}, nil
 	}
 	userinfo := respons(*newinfos)

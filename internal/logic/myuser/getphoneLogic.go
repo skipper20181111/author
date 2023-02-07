@@ -31,14 +31,20 @@ func NewGetphoneLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Getphone
 
 func (l *GetphoneLogic) Getphone(req *types.GetPhoneRes) (resp *types.GetPhoneResp, err error) {
 	one, err := l.svcCtx.AccessTokenModel.FindOne(l.ctx, refresh.Tockenid)
+	if one == nil {
+		return &types.GetPhoneResp{Code: "10000", Msg: "未查询到AccessToken"}, nil
+	}
 	var getphone types.PhoneStruct
 	urlPath := fmt.Sprintf("https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token=%s", one.Token)
 	PhoneResp, err := httpc.Do(context.Background(), http.MethodPost, urlPath, getphonestruct{Code: req.PhoneCode})
-	body, _ := ioutil.ReadAll(PhoneResp.Body)
+	if err != nil || PhoneResp == nil {
+		return &types.GetPhoneResp{Code: "10000", Msg: "网络不通，请稍后再试"}, nil
+	}
+	body, err := ioutil.ReadAll(PhoneResp.Body)
 	json.Unmarshal(body, &getphone)
 	PhoneResp.Body.Close()
 	if getphone.Errcode != 0 {
-		return &types.GetPhoneResp{Code: "4004", Msg: getphone.Errmsg}, nil
+		return &types.GetPhoneResp{Code: "10000", Msg: getphone.Errmsg}, nil
 	}
 
 	return &types.GetPhoneResp{Code: "10000", Msg: "success", Data: &types.GetPhoneRp{Phone: getphone.Phoneinfo.PurePhoneNumber, CountryCode: getphone.Phoneinfo.CountryCode}}, nil

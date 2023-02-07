@@ -42,9 +42,6 @@ func NewLoginLogic(ctx context.Context, svcCtx *svc.ServiceContext) *LoginLogic 
 		svcCtx: svcCtx,
 	}
 }
-func ToNullTime(t time.Time) NullTime {
-	return NullTime{Time: t, Valid: !t.IsZero()}
-}
 func UserBehaviour(ctx context.Context, svcCtx *svc.ServiceContext, behaviour, phone string) error {
 	nowtime := time.Now()
 	_, err := svcCtx.UserBehaviourModel.Insert(ctx, &cachemodel.UserBehaviourLog{Behaviour: behaviour, Phone: phone, Date: nowtime})
@@ -73,7 +70,7 @@ func (l *LoginLogic) Login(req *types.LoginRes) (resp *types.LoginResp, err erro
 		return &types.LoginResp{Code: "4004", Msg: wxmsg.Errmsg}, nil
 	}
 	infos, err := l.svcCtx.UserModel.FindOneByPhone(l.ctx, req.Phone)
-	if err != nil {
+	if infos == nil && err.Error() == "notfind" {
 		/*
 		   此时为新用户，需要新建用户，并指示新用户
 		*/
@@ -81,28 +78,37 @@ func (l *LoginLogic) Login(req *types.LoginRes) (resp *types.LoginResp, err erro
 		loginresp.Msg = "返回用户信息"
 		loginresp.Code = "10000"
 		newinfos, _ := l.svcCtx.UserModel.FindOneByPhone(l.ctx, req.Phone)
+		if newinfos == nil {
+			loginresp.Msg = "数据库断联"
+			loginresp.Code = "4004"
+			return &loginresp, nil
+		}
 		userinfo := respons(*newinfos)
 		jwtToken, accessExpire, refreshAfter, _ := l.getToken(wxmsg.Openid, req.Phone)
 		loginresp.Data = types.LoginRp{Userinfo: userinfo, IsNew: 1, AccessToken: jwtToken, AccessExpire: strconv.Itoa(int(accessExpire)), RefreshAfter: strconv.Itoa(int(refreshAfter))}
 		UserBehaviour(l.ctx, l.svcCtx, "新建用户", userinfo.Phone)
 		return &loginresp, nil
-	}
-	/*
-		此时确定为老用户，但是应当告知是否解绑
-	*/
-	if wxmsg.Openid != infos.Openid {
+	} else if infos != nil {
+		/*
+			此时确定为老用户，但是应当告知是否解绑
+		*/
+		if wxmsg.Openid != infos.Openid {
+			userinfo := respons(*infos)
+			userinfo.Openid = wxmsg.Openid // 这里替换掉原有的openid返回给前端
+			jwtToken, accessExpire, refreshAfter, _ := l.getToken(wxmsg.Openid, req.Phone)
+			return &types.LoginResp{Code: "10000", Msg: "解除绑定", Data: types.LoginRp{Userinfo: userinfo, AccessToken: jwtToken, AccessExpire: strconv.Itoa(int(accessExpire)), RefreshAfter: strconv.Itoa(int(refreshAfter))}}, nil
+		}
 		userinfo := respons(*infos)
-		userinfo.Openid = wxmsg.Openid // 这里替换掉原有的openid返回给前端
+		loginresp.Msg = "登录成功，返回用户信息"
+		loginresp.Code = "10000"
 		jwtToken, accessExpire, refreshAfter, _ := l.getToken(wxmsg.Openid, req.Phone)
-		return &types.LoginResp{Code: "10000", Msg: "解除绑定", Data: types.LoginRp{Userinfo: userinfo, AccessToken: jwtToken, AccessExpire: strconv.Itoa(int(accessExpire)), RefreshAfter: strconv.Itoa(int(refreshAfter))}}, nil
+		loginresp.Data = types.LoginRp{Userinfo: userinfo, IsNew: 0, AccessToken: jwtToken, AccessExpire: strconv.Itoa(int(accessExpire)), RefreshAfter: strconv.Itoa(int(refreshAfter))}
+		UserBehaviour(l.ctx, l.svcCtx, "用户登录", userinfo.Phone)
+		return &loginresp, nil
+	} else {
+		return &types.LoginResp{Code: "4004", Msg: "数据库未连接"}, nil
 	}
-	userinfo := respons(*infos)
-	loginresp.Msg = "登录成功，返回用户信息"
-	loginresp.Code = "10000"
-	jwtToken, accessExpire, refreshAfter, err := l.getToken(wxmsg.Openid, req.Phone)
-	loginresp.Data = types.LoginRp{Userinfo: userinfo, IsNew: 0, AccessToken: jwtToken, AccessExpire: strconv.Itoa(int(accessExpire)), RefreshAfter: strconv.Itoa(int(refreshAfter))}
-	UserBehaviour(l.ctx, l.svcCtx, "用户登录", userinfo.Phone)
-	return &loginresp, nil
+
 }
 func (l *LoginLogic) getToken(openid, phone string) (jwtToken string, accessExpire int64, refreshAfter int64, err error) {
 	// ---start---
@@ -119,7 +125,7 @@ func (l *LoginLogic) getToken(openid, phone string) (jwtToken string, accessExpi
 	// ---end---
 }
 func (l *LoginLogic) newuser(openid, phone string) error {
-	_, err := l.svcCtx.UserModel.Insert(l.ctx, &cachemodel.Userinfos{Openid: openid, Phone: phone, NickName: phone, Avatar: "'https://img.waterflowfit.top/img/微信图片_20220925111848.jpg'", Gender: 0, Birthday: "2004-09-01", Region: "静安区"})
+	_, err := l.svcCtx.UserModel.Insert(l.ctx, &cachemodel.Userinfos{Openid: openid, Phone: phone, NickName: phone, Avatar: "https://img.waterflowfit.top/img/17854230845/5f411e06b7a9cavatar.png", Gender: 0, Birthday: "2004-09-01", Region: "静安区"})
 	return err
 }
 func respons(Userinfos cachemodel.Userinfos) (userinfo types.UserInfo) {
@@ -132,7 +138,12 @@ func respons(Userinfos cachemodel.Userinfos) (userinfo types.UserInfo) {
 	userinfo.Openid = Userinfos.Openid
 	return userinfo
 }
-func (l *LoginLogic) code2Session(code string) (wxLogMsg code2sess, err error) {
+func (l *LoginLogic) code2Session(code string) (code2sess, error) {
+	defer func() {
+		if e := recover(); e != nil {
+			return
+		}
+	}()
 	var res code2sess
 	params := url.Values{}
 	Url, err := url.Parse("https://api.weixin.qq.com/sns/jscode2session")

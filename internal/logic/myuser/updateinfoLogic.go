@@ -39,6 +39,9 @@ func (l *UpdateinfoLogic) Updateinfo(req *types.UpdateUserInfoRes) (resp *types.
 		return &types.UpdateUserInfoResp{Code: "4004", Msg: "修改失败"}, nil
 	}
 	infos, err := l.svcCtx.UserModel.FindOneByPhone(l.ctx, req.Phone)
+	if infos == nil {
+		return &types.UpdateUserInfoResp{Code: "4004", Msg: "修改失败"}, nil
+	}
 	info := respons(*infos)
 	UserBehaviour(l.ctx, l.svcCtx, "更新用户信息", req.Phone)
 	return &types.UpdateUserInfoResp{Code: "10000", Msg: "修改成功", Data: types.UpdateUserInfoRp{Userinfo: info}}, nil

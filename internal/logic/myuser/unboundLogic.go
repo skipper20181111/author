@@ -51,6 +51,9 @@ func (l *UnboundLogic) Unbound(req *types.LoginRes) (resp *types.UnboundResp, er
 		return &types.UnboundResp{Code: "4004", Msg: "修改失败"}, nil
 	}
 	newinfos, err := l.svcCtx.UserModel.FindOneByPhone(l.ctx, req.Phone)
+	if newinfos == nil {
+		return &types.UnboundResp{Code: "4004", Msg: "修改失败"}, nil
+	}
 	info := respons(*newinfos)
 	jwtToken, accessExpire, refreshAfter, _ := l.getToken(info.Openid, info.Phone)
 	UserBehaviour(l.ctx, l.svcCtx, "绑定新的微信号", req.Phone)
