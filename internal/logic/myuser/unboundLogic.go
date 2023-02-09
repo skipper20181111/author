@@ -31,32 +31,27 @@ func NewUnboundLogic(ctx context.Context, svcCtx *svc.ServiceContext) *UnboundLo
 	}
 }
 
-func (l *UnboundLogic) Unbound(req *types.LoginRes) (resp *types.UnboundResp, err error) {
-	if l.ctx.Value("phone") != req.Phone {
-		return &types.UnboundResp{
-			Code: "4004",
-			Msg:  "请勿使用其他用户的token",
-		}, nil
-	}
+func (l *UnboundLogic) Unbound(req *types.UnboundRes) (resp *types.UnboundResp, err error) {
+	UserPhone := l.ctx.Value("phone").(string)
 	wxmsg, err := l.code2Session(req.LoginCode)
 	if err != nil || wxmsg.Openid == "" {
 		return &types.UnboundResp{Code: "4004", Msg: wxmsg.Errmsg}, nil
 	}
-	infos, err := l.svcCtx.UserModel.FindOneByPhone(l.ctx, req.Phone)
+	infos, err := l.svcCtx.UserModel.FindOneByPhone(l.ctx, UserPhone)
 	infos.Openid = wxmsg.Openid
 
-	err = l.svcCtx.UserModel.UpdateByPhone(l.ctx, req.Phone, infos)
+	err = l.svcCtx.UserModel.UpdateByPhone(l.ctx, UserPhone, infos)
 	if err != nil {
 		print(err)
 		return &types.UnboundResp{Code: "4004", Msg: "修改失败"}, nil
 	}
-	newinfos, err := l.svcCtx.UserModel.FindOneByPhone(l.ctx, req.Phone)
+	newinfos, err := l.svcCtx.UserModel.FindOneByPhone(l.ctx, UserPhone)
 	if newinfos == nil {
 		return &types.UnboundResp{Code: "4004", Msg: "修改失败"}, nil
 	}
 	info := respons(*newinfos)
 	jwtToken, accessExpire, refreshAfter, _ := l.getToken(info.Openid, info.Phone)
-	UserBehaviour(l.ctx, l.svcCtx, "绑定新的微信号", req.Phone)
+	UserBehaviour(l.ctx, l.svcCtx, "绑定新的微信号", UserPhone)
 	return &types.UnboundResp{Code: "10000", Msg: "修改成功", Data: types.UnboundRp{Userinfo: info, AccessToken: jwtToken, AccessExpire: strconv.Itoa(int(accessExpire)), RefreshAfter: strconv.Itoa(int(refreshAfter))}}, nil
 
 }

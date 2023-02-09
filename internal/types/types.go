@@ -31,8 +31,6 @@ type LoginResp struct {
 }
 
 type GetUserInfoRes struct {
-	Phone  string `json:"phone"`
-	Openid string `json:"openid"` // 我会优先用openid查找，找不到再用phone去查
 }
 
 type GetUserInfoRp struct {
@@ -46,13 +44,11 @@ type GetUserInfoResp struct {
 }
 
 type UpdateUserInfoRes struct {
-	Openid   string `json:"openid"`
 	NickName string `json:"nickname"`
 	Avatar   string `json:"avatar"`
 	Gender   int64  `json:"gender"`
 	Birthday string `json:"birthday"`
 	Region   string `json:"region"`
-	Phone    string `json:"phone"`
 }
 
 type UpdateUserInfoRp struct {
@@ -63,6 +59,10 @@ type UpdateUserInfoResp struct {
 	Code string           `json:"code"`
 	Msg  string           `json:"msg"`
 	Data UpdateUserInfoRp `json:"data"`
+}
+
+type UnboundRes struct {
+	LoginCode string `json:"loginCode"`
 }
 
 type UnboundRp struct {

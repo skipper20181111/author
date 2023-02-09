@@ -38,8 +38,6 @@ type (
 
 type (
 	GetUserInfoRes {
-		Phone  string `json:"phone"`
-		Openid string `json:"openid"` // 我会优先用openid查找，找不到再用phone去查
 	}
 	GetUserInfoRp {
 		Userinfo UserInfo `json:"userInfo"`
@@ -52,13 +50,11 @@ type (
 )
 type (
 	UpdateUserInfoRes { // 更新手机号，解绑手机号，注销账号都用这个接口
-		Openid   string `json:"openid"`
 		NickName string `json:"nickname"`
 		Avatar   string `json:"avatar"`
 		Gender   int64  `json:"gender"`
 		Birthday string `json:"birthday"`
 		Region   string `json:"region"`
-		Phone    string `json:"phone"`
 	}
 	UpdateUserInfoRp {
 		Userinfo UserInfo `json:"userInfo"`
@@ -70,6 +66,9 @@ type (
 	}
 )
 type (
+	UnboundRes {
+		LoginCode string `json:"loginCode"`
+	}
 	UnboundRp {
 		Userinfo     UserInfo `json:"userInfo"`
 		AccessToken  string   `json:"accessToken"`
@@ -170,5 +169,5 @@ service user-api {
 	*/
 	@doc "更新信息"
 	@handler unbound
-	post /unbound (LoginRes) returns (UnboundResp)
+	post /unbound (UnboundRes) returns (UnboundResp)
 }
