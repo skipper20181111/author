@@ -65,20 +65,21 @@ type (
 		Data UpdateUserInfoRp `json:"data"`
 	}
 )
+
 type (
-	UnboundRes {
+	ReboundRes {
 		LoginCode string `json:"loginCode"`
 	}
-	UnboundRp {
+	ReboundRp {
 		Userinfo     UserInfo `json:"userInfo"`
 		AccessToken  string   `json:"accessToken"`
 		AccessExpire string   `json:"accessExpire"`
 		RefreshAfter string   `json:"refreshAfter"`
 	}
-	UnboundResp {
+	ReboundResp {
 		Code string    `json:"code"`
 		Msg  string    `json:"msg"`
-		Data UnboundRp `json:"data"`
+		Data ReboundRp `json:"data"`
 	}
 )
 type (
@@ -168,6 +169,6 @@ service user-api {
 	不管更新啥，都要全部传给我
 	*/
 	@doc "更新信息"
-	@handler unbound
-	post /unbound (UnboundRes) returns (UnboundResp)
+	@handler rebound
+	post /rebound (ReboundRes) returns (ReboundResp)
 }

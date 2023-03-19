@@ -9,16 +9,16 @@ import (
 	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
-func UnboundHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
+func ReboundHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req types.UnboundRes
+		var req types.ReboundRes
 		if err := httpx.Parse(r, &req); err != nil {
 			httpx.Error(w, err)
 			return
 		}
 
-		l := myuser.NewUnboundLogic(r.Context(), svcCtx)
-		resp, err := l.Unbound(&req)
+		l := myuser.NewReboundLogic(r.Context(), svcCtx)
+		resp, err := l.Rebound(&req)
 		if err != nil {
 			httpx.Error(w, err)
 		} else {

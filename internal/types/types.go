@@ -61,21 +61,21 @@ type UpdateUserInfoResp struct {
 	Data UpdateUserInfoRp `json:"data"`
 }
 
-type UnboundRes struct {
+type ReboundRes struct {
 	LoginCode string `json:"loginCode"`
 }
 
-type UnboundRp struct {
+type ReboundRp struct {
 	Userinfo     UserInfo `json:"userInfo"`
 	AccessToken  string   `json:"accessToken"`
 	AccessExpire string   `json:"accessExpire"`
 	RefreshAfter string   `json:"refreshAfter"`
 }
 
-type UnboundResp struct {
+type ReboundResp struct {
 	Code string    `json:"code"`
 	Msg  string    `json:"msg"`
-	Data UnboundRp `json:"data"`
+	Data ReboundRp `json:"data"`
 }
 
 type RefreshRes struct {

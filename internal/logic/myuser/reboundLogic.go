@@ -17,25 +17,25 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-type UnboundLogic struct {
+type ReboundLogic struct {
 	logx.Logger
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
 }
 
-func NewUnboundLogic(ctx context.Context, svcCtx *svc.ServiceContext) *UnboundLogic {
-	return &UnboundLogic{
+func NewReboundLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ReboundLogic {
+	return &ReboundLogic{
 		Logger: logx.WithContext(ctx),
 		ctx:    ctx,
 		svcCtx: svcCtx,
 	}
 }
 
-func (l *UnboundLogic) Unbound(req *types.UnboundRes) (resp *types.UnboundResp, err error) {
+func (l *ReboundLogic) Rebound(req *types.ReboundRes) (resp *types.ReboundResp, err error) {
 	UserPhone := l.ctx.Value("phone").(string)
 	wxmsg, err := l.code2Session(req.LoginCode)
 	if err != nil || wxmsg.Openid == "" {
-		return &types.UnboundResp{Code: "4004", Msg: wxmsg.Errmsg}, nil
+		return &types.ReboundResp{Code: "4004", Msg: wxmsg.Errmsg}, nil
 	}
 	infos, err := l.svcCtx.UserModel.FindOneByPhone(l.ctx, UserPhone)
 	infos.Openid = wxmsg.Openid
@@ -43,19 +43,19 @@ func (l *UnboundLogic) Unbound(req *types.UnboundRes) (resp *types.UnboundResp, 
 	err = l.svcCtx.UserModel.UpdateByPhone(l.ctx, UserPhone, infos)
 	if err != nil {
 		print(err)
-		return &types.UnboundResp{Code: "4004", Msg: "修改失败"}, nil
+		return &types.ReboundResp{Code: "4004", Msg: "修改失败"}, nil
 	}
 	newinfos, err := l.svcCtx.UserModel.FindOneByPhone(l.ctx, UserPhone)
 	if newinfos == nil {
-		return &types.UnboundResp{Code: "4004", Msg: "修改失败"}, nil
+		return &types.ReboundResp{Code: "4004", Msg: "修改失败"}, nil
 	}
 	info := respons(*newinfos)
 	jwtToken, accessExpire, refreshAfter, _ := l.getToken(info.Openid, info.Phone)
 	UserBehaviour(l.ctx, l.svcCtx, "绑定新的微信号", UserPhone)
-	return &types.UnboundResp{Code: "10000", Msg: "修改成功", Data: types.UnboundRp{Userinfo: info, AccessToken: jwtToken, AccessExpire: strconv.Itoa(int(accessExpire)), RefreshAfter: strconv.Itoa(int(refreshAfter))}}, nil
+	return &types.ReboundResp{Code: "10000", Msg: "修改成功", Data: types.ReboundRp{Userinfo: info, AccessToken: jwtToken, AccessExpire: strconv.Itoa(int(accessExpire)), RefreshAfter: strconv.Itoa(int(refreshAfter))}}, nil
 
 }
-func (l *UnboundLogic) getToken(openid, phone string) (jwtToken string, accessExpire int64, refreshAfter int64, err error) {
+func (l *ReboundLogic) getToken(openid, phone string) (jwtToken string, accessExpire int64, refreshAfter int64, err error) {
 	// ---start---
 	now := time.Now().Unix()
 	fmt.Println(now)
@@ -69,7 +69,7 @@ func (l *UnboundLogic) getToken(openid, phone string) (jwtToken string, accessEx
 	return jwtToken, accessExpire, refreshAfter, nil
 	// ---end---
 }
-func (l *UnboundLogic) getJwtToken(secretKey string, iat, seconds int64, openid, phone string) (string, error) {
+func (l *ReboundLogic) getJwtToken(secretKey string, iat, seconds int64, openid, phone string) (string, error) {
 	claims := make(jwt.MapClaims)
 	claims["exp"] = iat + seconds
 	claims["iat"] = iat
@@ -79,7 +79,7 @@ func (l *UnboundLogic) getJwtToken(secretKey string, iat, seconds int64, openid,
 	token.Claims = claims
 	return token.SignedString([]byte(secretKey))
 }
-func (l *UnboundLogic) code2Session(code string) (wxLogMsg code2sess, err error) {
+func (l *ReboundLogic) code2Session(code string) (wxLogMsg code2sess, err error) {
 	var res code2sess
 	params := url.Values{}
 	Url, err := url.Parse("https://api.weixin.qq.com/sns/jscode2session")
