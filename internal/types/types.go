@@ -2,13 +2,15 @@
 package types
 
 type UserInfo struct {
-	NickName string `json:"nickname"`
-	Avatar   string `json:"avatar"`
-	Gender   int64  `json:"gender"`
-	Birthday string `json:"birthday"`
-	Region   string `json:"region"`
-	Phone    string `json:"phone"`
-	Openid   string `json:"openid"`
+	NickName        string `json:"nickname"`
+	Avatar          string `json:"avatar"`
+	Gender          int64  `json:"gender"`
+	Birthday        string `json:"birthday"`
+	Region          string `json:"region"`
+	Phone           string `json:"phone"`
+	Openid          string `json:"openid"`
+	HistoryPoints   int64  `json:"historyPoints"`
+	AvailablePoints int64  `json:"availablePoints"`
 }
 
 type LoginRes struct {

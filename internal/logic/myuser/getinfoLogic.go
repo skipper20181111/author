@@ -29,7 +29,14 @@ func (l *GetinfoLogic) Getinfo(req *types.GetUserInfoRes) (resp *types.GetUserIn
 		return &types.GetUserInfoResp{Code: "4004", Msg: "未查询到用户信息"}, nil
 	}
 	userinfo := respons(*newinfos)
-
+	point, _ := l.svcCtx.UserPointsModel.FindOneByPhone(l.ctx, UserPhone)
+	if point != nil {
+		userinfo.AvailablePoints = point.AvailablePoints
+		userinfo.HistoryPoints = point.HistoryPoints
+	} else {
+		userinfo.AvailablePoints = 0
+		userinfo.HistoryPoints = 0
+	}
 	return &types.GetUserInfoResp{
 		Code: "10000",
 		Msg:  "成功查询用户信息",
