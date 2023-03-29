@@ -132,6 +132,9 @@ service user-api {
 	@doc "刷新access_token"
 	@handler refreshat
 	post /refreshat (RefreshRes) returns (GetPhoneResp)
+	@doc "探针"
+	@handler probe
+	get /probe () returns ()
 }
 
 @server(
