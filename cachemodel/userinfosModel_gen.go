@@ -10,21 +10,16 @@ import (
 	"strings"
 
 	"github.com/zeromicro/go-zero/core/stores/builder"
-	"github.com/zeromicro/go-zero/core/stores/cache"
 	"github.com/zeromicro/go-zero/core/stores/sqlc"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"github.com/zeromicro/go-zero/core/stringx"
 )
 
 var (
-	userinfosFieldNames               = builder.RawFieldNames(&Userinfos{})
-	userinfosRows                     = strings.Join(userinfosFieldNames, ",")
-	userinfosRowsExpectAutoSet        = strings.Join(stringx.Remove(userinfosFieldNames, "`id`", "`create_time`", "`update_time`", "`create_at`", "`update_at`"), ",")
-	userinfosRowsWithPlaceHolder      = strings.Join(stringx.Remove(userinfosFieldNames, "`id`", "`create_time`", "`update_time`", "`create_at`", "`update_at`"), "=?,") + "=?"
-	userinfosRowsWithPlaceHolderPhone = strings.Join(stringx.Remove(userinfosFieldNames, "`id`", "`create_time`", "`update_time`", "`create_at`", "`update_at`", "`phone`"), "=?,") + "=?"
-
-	cacheDevUserinfosIdPrefix    = "cache:dev:userinfos:id:"
-	cacheDevUserinfosPhonePrefix = "cache:dev:userinfos:phone:"
+	userinfosFieldNames          = builder.RawFieldNames(&Userinfos{})
+	userinfosRows                = strings.Join(userinfosFieldNames, ",")
+	userinfosRowsExpectAutoSet   = strings.Join(stringx.Remove(userinfosFieldNames, "`id`", "`create_time`", "`update_time`", "`create_at`", "`update_at`"), ",")
+	userinfosRowsWithPlaceHolder = strings.Join(stringx.Remove(userinfosFieldNames, "`id`", "`create_time`", "`update_time`", "`create_at`", "`update_at`"), "=?,") + "=?"
 )
 
 type (
@@ -38,51 +33,39 @@ type (
 	}
 
 	defaultUserinfosModel struct {
-		sqlc.CachedConn
+		conn  sqlx.SqlConn
 		table string
 	}
 
 	Userinfos struct {
 		Id       uint64 `db:"id"`
-		NickName string `db:"nick_name"`
-		Avatar   string `db:"avatar"`
-		Gender   int64  `db:"gender"`
-		Birthday string `db:"birthday"`
-		Region   string `db:"region"`
-		Phone    string `db:"phone"`
-		Openid   string `db:"openid"`
+		NickName string `db:"nick_name"` // 用户昵称
+		Avatar   string `db:"avatar"`    // 用户头像
+		Gender   int64  `db:"gender"`    // 性别
+		Birthday string `db:"birthday"`  // 用户生日
+		Region   string `db:"region"`    // 地址区位（静安区）
+		Phone    string `db:"phone"`     // 账户手机号
+		Openid   string `db:"openid"`    // 微信openid
 	}
 )
 
-func newUserinfosModel(conn sqlx.SqlConn, c cache.CacheConf) *defaultUserinfosModel {
+func newUserinfosModel(conn sqlx.SqlConn) *defaultUserinfosModel {
 	return &defaultUserinfosModel{
-		CachedConn: sqlc.NewConn(conn, c),
-		table:      "`userinfos`",
+		conn:  conn,
+		table: "`userinfos`",
 	}
 }
 
 func (m *defaultUserinfosModel) Delete(ctx context.Context, id uint64) error {
-	data, err := m.FindOne(ctx, id)
-	if err != nil {
-		return err
-	}
-
-	devUserinfosIdKey := fmt.Sprintf("%s%v", cacheDevUserinfosIdPrefix, id)
-	devUserinfosPhoneKey := fmt.Sprintf("%s%v", cacheDevUserinfosPhonePrefix, data.Phone)
-	_, err = m.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
-		query := fmt.Sprintf("delete from %s where `id` = ?", m.table)
-		return conn.ExecCtx(ctx, query, id)
-	}, devUserinfosIdKey, devUserinfosPhoneKey)
+	query := fmt.Sprintf("delete from %s where `id` = ?", m.table)
+	_, err := m.conn.ExecCtx(ctx, query, id)
 	return err
 }
 
 func (m *defaultUserinfosModel) FindOne(ctx context.Context, id uint64) (*Userinfos, error) {
-	devUserinfosIdKey := fmt.Sprintf("%s%v", cacheDevUserinfosIdPrefix, id)
+	query := fmt.Sprintf("select %s from %s where `id` = ? limit 1", userinfosRows, m.table)
 	var resp Userinfos
-	err := m.QueryRowCtx(ctx, &resp, devUserinfosIdKey, func(ctx context.Context, conn sqlx.SqlConn, v interface{}) error {
-		query := fmt.Sprintf("select %s from %s where `id` = ? limit 1", userinfosRows, m.table)
-		return conn.QueryRowCtx(ctx, v, query, id)
-	})
+	err := m.conn.QueryRowCtx(ctx, &resp, query, id)
 	switch err {
 	case nil:
 		return &resp, nil
@@ -92,30 +75,11 @@ func (m *defaultUserinfosModel) FindOne(ctx context.Context, id uint64) (*Userin
 		return nil, err
 	}
 }
-func (m *defaultUserinfosModel) UpdateByPhone(ctx context.Context, phone string, newData *Userinfos) error {
-	data, err := m.FindOneByPhone(ctx, phone)
-	if err != nil {
-		return err
-	}
 
-	devUserinfosIdKey := fmt.Sprintf("%s%v", cacheDevUserinfosIdPrefix, data.Id)
-	devUserinfosPhoneKey := fmt.Sprintf("%s%v", cacheDevUserinfosPhonePrefix, data.Phone)
-	_, err = m.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
-		query := fmt.Sprintf("update %s set %s where `phone` = ?", m.table, userinfosRowsWithPlaceHolderPhone)
-		return conn.ExecCtx(ctx, query, newData.NickName, newData.Avatar, newData.Gender, newData.Birthday, newData.Region, newData.Openid, newData.Phone)
-	}, devUserinfosIdKey, devUserinfosPhoneKey)
-	return err
-}
 func (m *defaultUserinfosModel) FindOneByPhone(ctx context.Context, phone string) (*Userinfos, error) {
-	devUserinfosPhoneKey := fmt.Sprintf("%s%v", cacheDevUserinfosPhonePrefix, phone)
 	var resp Userinfos
-	err := m.QueryRowIndexCtx(ctx, &resp, devUserinfosPhoneKey, m.formatPrimary, func(ctx context.Context, conn sqlx.SqlConn, v interface{}) (i interface{}, e error) {
-		query := fmt.Sprintf("select %s from %s where `phone` = ? limit 1", userinfosRows, m.table)
-		if err := conn.QueryRowCtx(ctx, &resp, query, phone); err != nil {
-			return nil, err
-		}
-		return resp.Id, nil
-	}, m.queryPrimary)
+	query := fmt.Sprintf("select %s from %s where `phone` = ? limit 1", userinfosRows, m.table)
+	err := m.conn.QueryRowCtx(ctx, &resp, query, phone)
 	switch err {
 	case nil:
 		return &resp, nil
@@ -127,37 +91,20 @@ func (m *defaultUserinfosModel) FindOneByPhone(ctx context.Context, phone string
 }
 
 func (m *defaultUserinfosModel) Insert(ctx context.Context, data *Userinfos) (sql.Result, error) {
-	devUserinfosIdKey := fmt.Sprintf("%s%v", cacheDevUserinfosIdPrefix, data.Id)
-	devUserinfosPhoneKey := fmt.Sprintf("%s%v", cacheDevUserinfosPhonePrefix, data.Phone)
-	ret, err := m.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
-		query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?)", m.table, userinfosRowsExpectAutoSet)
-		return conn.ExecCtx(ctx, query, data.NickName, data.Avatar, data.Gender, data.Birthday, data.Region, data.Phone, data.Openid)
-	}, devUserinfosIdKey, devUserinfosPhoneKey)
+	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?)", m.table, userinfosRowsExpectAutoSet)
+	ret, err := m.conn.ExecCtx(ctx, query, data.NickName, data.Avatar, data.Gender, data.Birthday, data.Region, data.Phone, data.Openid)
 	return ret, err
 }
 
 func (m *defaultUserinfosModel) Update(ctx context.Context, newData *Userinfos) error {
-	data, err := m.FindOne(ctx, newData.Id)
-	if err != nil {
-		return err
-	}
-
-	devUserinfosIdKey := fmt.Sprintf("%s%v", cacheDevUserinfosIdPrefix, data.Id)
-	devUserinfosPhoneKey := fmt.Sprintf("%s%v", cacheDevUserinfosPhonePrefix, data.Phone)
-	_, err = m.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
-		query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, userinfosRowsWithPlaceHolder)
-		return conn.ExecCtx(ctx, query, newData.NickName, newData.Avatar, newData.Gender, newData.Birthday, newData.Region, newData.Phone, newData.Openid, newData.Id)
-	}, devUserinfosIdKey, devUserinfosPhoneKey)
+	query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, userinfosRowsWithPlaceHolder)
+	_, err := m.conn.ExecCtx(ctx, query, newData.NickName, newData.Avatar, newData.Gender, newData.Birthday, newData.Region, newData.Phone, newData.Openid, newData.Id)
 	return err
 }
-
-func (m *defaultUserinfosModel) formatPrimary(primary interface{}) string {
-	return fmt.Sprintf("%s%v", cacheDevUserinfosIdPrefix, primary)
-}
-
-func (m *defaultUserinfosModel) queryPrimary(ctx context.Context, conn sqlx.SqlConn, v, primary interface{}) error {
-	query := fmt.Sprintf("select %s from %s where `id` = ? limit 1", userinfosRows, m.table)
-	return conn.QueryRowCtx(ctx, v, query, primary)
+func (m *defaultUserinfosModel) UpdateByPhone(ctx context.Context, phone string, newData *Userinfos) error {
+	query := fmt.Sprintf("update %s set %s where `phone` = ?", m.table, userinfosRowsWithPlaceHolder)
+	_, err := m.conn.ExecCtx(ctx, query, newData.NickName, newData.Avatar, newData.Gender, newData.Birthday, newData.Region, newData.Phone, newData.Openid, phone)
+	return err
 }
 
 func (m *defaultUserinfosModel) tableName() string {
