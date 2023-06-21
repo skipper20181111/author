@@ -37,13 +37,15 @@ func refresscache() {
 		time.Sleep(time.Second * 3)
 		urlPath := "http://localhost:8888/refresh/refreshat"
 		data := ForceRefresh{Force: false}
-		resp, err := httpc.Do(context.Background(), http.MethodPost, urlPath, data)
-		if err != nil {
-			fmt.Println(err, "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+		resp, _ := httpc.Do(context.Background(), http.MethodPost, urlPath, data)
+		if resp == nil {
+			time.Sleep(time.Second * 50)
+			continue
+		} else {
+			fmt.Println("结束刷新", resp)
+			fmt.Println(resp.Body.Close())
+			time.Sleep(time.Second * 50)
 		}
-		fmt.Println(resp.Body.Close())
-		fmt.Println("结束刷新")
-		time.Sleep(time.Second * 50)
 	}
 }
 

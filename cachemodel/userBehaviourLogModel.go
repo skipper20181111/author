@@ -1,9 +1,6 @@
 package cachemodel
 
-import (
-	"github.com/zeromicro/go-zero/core/stores/cache"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
-)
+import "github.com/zeromicro/go-zero/core/stores/sqlx"
 
 var _ UserBehaviourLogModel = (*customUserBehaviourLogModel)(nil)
 
@@ -20,8 +17,8 @@ type (
 )
 
 // NewUserBehaviourLogModel returns a model for the database table.
-func NewUserBehaviourLogModel(conn sqlx.SqlConn, c cache.CacheConf) UserBehaviourLogModel {
+func NewUserBehaviourLogModel(conn sqlx.SqlConn) UserBehaviourLogModel {
 	return &customUserBehaviourLogModel{
-		defaultUserBehaviourLogModel: newUserBehaviourLogModel(conn, c),
+		defaultUserBehaviourLogModel: newUserBehaviourLogModel(conn),
 	}
 }

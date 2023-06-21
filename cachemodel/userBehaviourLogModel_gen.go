@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/zeromicro/go-zero/core/stores/builder"
-	"github.com/zeromicro/go-zero/core/stores/cache"
 	"github.com/zeromicro/go-zero/core/stores/sqlc"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"github.com/zeromicro/go-zero/core/stringx"
@@ -21,8 +20,6 @@ var (
 	userBehaviourLogRows                = strings.Join(userBehaviourLogFieldNames, ",")
 	userBehaviourLogRowsExpectAutoSet   = strings.Join(stringx.Remove(userBehaviourLogFieldNames, "`id`", "`create_time`", "`update_time`", "`create_at`", "`update_at`"), ",")
 	userBehaviourLogRowsWithPlaceHolder = strings.Join(stringx.Remove(userBehaviourLogFieldNames, "`id`", "`create_time`", "`update_time`", "`create_at`", "`update_at`"), "=?,") + "=?"
-
-	cacheDevUserBehaviourLogIdPrefix = "cache:dev:userBehaviourLog:id:"
 )
 
 type (
@@ -34,41 +31,35 @@ type (
 	}
 
 	defaultUserBehaviourLogModel struct {
-		sqlc.CachedConn
+		conn  sqlx.SqlConn
 		table string
 	}
 
 	UserBehaviourLog struct {
 		Id        int64     `db:"id"`
-		Phone     string    `db:"phone"`
-		Behaviour string    `db:"behaviour"`
-		Date      time.Time `db:"date"`
+		Phone     string    `db:"phone"`     // 手机号账号
+		Behaviour string    `db:"behaviour"` // 行为
+		Date      time.Time `db:"date"`      // 日志时间
 	}
 )
 
-func newUserBehaviourLogModel(conn sqlx.SqlConn, c cache.CacheConf) *defaultUserBehaviourLogModel {
+func newUserBehaviourLogModel(conn sqlx.SqlConn) *defaultUserBehaviourLogModel {
 	return &defaultUserBehaviourLogModel{
-		CachedConn: sqlc.NewConn(conn, c),
-		table:      "`user_behaviour_log`",
+		conn:  conn,
+		table: "`user_behaviour_log`",
 	}
 }
 
 func (m *defaultUserBehaviourLogModel) Delete(ctx context.Context, id int64) error {
-	devUserBehaviourLogIdKey := fmt.Sprintf("%s%v", cacheDevUserBehaviourLogIdPrefix, id)
-	_, err := m.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
-		query := fmt.Sprintf("delete from %s where `id` = ?", m.table)
-		return conn.ExecCtx(ctx, query, id)
-	}, devUserBehaviourLogIdKey)
+	query := fmt.Sprintf("delete from %s where `id` = ?", m.table)
+	_, err := m.conn.ExecCtx(ctx, query, id)
 	return err
 }
 
 func (m *defaultUserBehaviourLogModel) FindOne(ctx context.Context, id int64) (*UserBehaviourLog, error) {
-	devUserBehaviourLogIdKey := fmt.Sprintf("%s%v", cacheDevUserBehaviourLogIdPrefix, id)
+	query := fmt.Sprintf("select %s from %s where `id` = ? limit 1", userBehaviourLogRows, m.table)
 	var resp UserBehaviourLog
-	err := m.QueryRowCtx(ctx, &resp, devUserBehaviourLogIdKey, func(ctx context.Context, conn sqlx.SqlConn, v interface{}) error {
-		query := fmt.Sprintf("select %s from %s where `id` = ? limit 1", userBehaviourLogRows, m.table)
-		return conn.QueryRowCtx(ctx, v, query, id)
-	})
+	err := m.conn.QueryRowCtx(ctx, &resp, query, id)
 	switch err {
 	case nil:
 		return &resp, nil
@@ -80,30 +71,15 @@ func (m *defaultUserBehaviourLogModel) FindOne(ctx context.Context, id int64) (*
 }
 
 func (m *defaultUserBehaviourLogModel) Insert(ctx context.Context, data *UserBehaviourLog) (sql.Result, error) {
-	devUserBehaviourLogIdKey := fmt.Sprintf("%s%v", cacheDevUserBehaviourLogIdPrefix, data.Id)
-	ret, err := m.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
-		query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?)", m.table, userBehaviourLogRowsExpectAutoSet)
-		return conn.ExecCtx(ctx, query, data.Phone, data.Behaviour, data.Date)
-	}, devUserBehaviourLogIdKey)
+	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?)", m.table, userBehaviourLogRowsExpectAutoSet)
+	ret, err := m.conn.ExecCtx(ctx, query, data.Phone, data.Behaviour, data.Date)
 	return ret, err
 }
 
 func (m *defaultUserBehaviourLogModel) Update(ctx context.Context, data *UserBehaviourLog) error {
-	devUserBehaviourLogIdKey := fmt.Sprintf("%s%v", cacheDevUserBehaviourLogIdPrefix, data.Id)
-	_, err := m.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
-		query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, userBehaviourLogRowsWithPlaceHolder)
-		return conn.ExecCtx(ctx, query, data.Phone, data.Behaviour, data.Date, data.Id)
-	}, devUserBehaviourLogIdKey)
+	query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, userBehaviourLogRowsWithPlaceHolder)
+	_, err := m.conn.ExecCtx(ctx, query, data.Phone, data.Behaviour, data.Date, data.Id)
 	return err
-}
-
-func (m *defaultUserBehaviourLogModel) formatPrimary(primary interface{}) string {
-	return fmt.Sprintf("%s%v", cacheDevUserBehaviourLogIdPrefix, primary)
-}
-
-func (m *defaultUserBehaviourLogModel) queryPrimary(ctx context.Context, conn sqlx.SqlConn, v, primary interface{}) error {
-	query := fmt.Sprintf("select %s from %s where `id` = ? limit 1", userBehaviourLogRows, m.table)
-	return conn.QueryRowCtx(ctx, v, query, primary)
 }
 
 func (m *defaultUserBehaviourLogModel) tableName() string {

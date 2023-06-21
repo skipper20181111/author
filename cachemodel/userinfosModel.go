@@ -1,9 +1,6 @@
 package cachemodel
 
-import (
-	"github.com/zeromicro/go-zero/core/stores/cache"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
-)
+import "github.com/zeromicro/go-zero/core/stores/sqlx"
 
 var _ UserinfosModel = (*customUserinfosModel)(nil)
 
@@ -20,8 +17,8 @@ type (
 )
 
 // NewUserinfosModel returns a model for the database table.
-func NewUserinfosModel(conn sqlx.SqlConn, c cache.CacheConf) UserinfosModel {
+func NewUserinfosModel(conn sqlx.SqlConn) UserinfosModel {
 	return &customUserinfosModel{
-		defaultUserinfosModel: newUserinfosModel(conn, c),
+		defaultUserinfosModel: newUserinfosModel(conn),
 	}
 }
