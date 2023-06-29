@@ -45,7 +45,7 @@ func (l *RefreshatLogic) Refreshat(req *types.RefreshRes) (resp *types.RefreshRe
 	}
 	one, err := l.svcCtx.AccessTokenModel.FindOne(l.ctx, Tockenid)
 	past := -one.Time.Sub(time.Now()).Seconds()
-	if (past*past)/36000000.1 > rand.Float64() {
+	if (past*past)/25000000.1 > rand.Float64() {
 		refresh, err := l.refresh()
 		if err != nil {
 			return &types.RefreshResp{Code: "4004", Msg: refresh.Errmsg}, nil
