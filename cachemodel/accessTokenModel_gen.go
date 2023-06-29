@@ -18,7 +18,7 @@ import (
 var (
 	accessTokenFieldNames          = builder.RawFieldNames(&AccessToken{})
 	accessTokenRows                = strings.Join(accessTokenFieldNames, ",")
-	accessTokenRowsExpectAutoSet   = strings.Join(stringx.Remove(accessTokenFieldNames, "`create_time`", "`update_time`", "`create_at`", "`update_at`"), ",")
+	accessTokenRowsExpectAutoSet   = strings.Join(stringx.Remove(accessTokenFieldNames, "`id`", "`create_time`", "`update_time`", "`create_at`", "`update_at`"), ",")
 	accessTokenRowsWithPlaceHolder = strings.Join(stringx.Remove(accessTokenFieldNames, "`id`", "`create_time`", "`update_time`", "`create_at`", "`update_at`"), "=?,") + "=?"
 )
 
@@ -36,9 +36,10 @@ type (
 	}
 
 	AccessToken struct {
-		Id    int64     `db:"id"`
-		Token string    `db:"token"` // access_token
-		Time  time.Time `db:"time"`  // 生成日期
+		Id       int64     `db:"id"`       // id
+		Token    string    `db:"token"`    // token字符串
+		Time     time.Time `db:"time"`     // 更新时间
+		Overtime int64     `db:"overtime"` // token生命长度
 	}
 )
 
@@ -71,13 +72,13 @@ func (m *defaultAccessTokenModel) FindOne(ctx context.Context, id int64) (*Acces
 
 func (m *defaultAccessTokenModel) Insert(ctx context.Context, data *AccessToken) (sql.Result, error) {
 	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?)", m.table, accessTokenRowsExpectAutoSet)
-	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.Token, data.Time)
+	ret, err := m.conn.ExecCtx(ctx, query, data.Token, data.Time, data.Overtime)
 	return ret, err
 }
 
 func (m *defaultAccessTokenModel) Update(ctx context.Context, data *AccessToken) error {
 	query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, accessTokenRowsWithPlaceHolder)
-	_, err := m.conn.ExecCtx(ctx, query, data.Token, data.Time, data.Id)
+	_, err := m.conn.ExecCtx(ctx, query, data.Token, data.Time, data.Overtime, data.Id)
 	return err
 }
 
