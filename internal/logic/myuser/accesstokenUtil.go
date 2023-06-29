@@ -36,6 +36,21 @@ func NewAccessTokenLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Acces
 		svcCtx: svcCtx,
 	}
 }
+func (l *AccessTokenLogic) PostLimit(key string, limit int) bool {
+	get, ok := l.svcCtx.LocalCache.Get(key)
+	count := 0
+	if ok {
+		count = get.(int)
+		if get.(int) >= limit {
+			return false
+		} else {
+			l.svcCtx.LocalCache.Set(key, count+1)
+		}
+	} else {
+		l.svcCtx.LocalCache.Set(key, 1)
+	}
+	return true
+}
 func (l *AccessTokenLogic) GetPhone(code string) (bool, *types.PhoneStruct) {
 	var getphone types.PhoneStruct
 	token := ""
@@ -58,6 +73,10 @@ func (l *AccessTokenLogic) GetPhone(code string) (bool, *types.PhoneStruct) {
 	json.Unmarshal(body, &getphone)
 	PhoneResp.Body.Close()
 	if getphone.Errcode != 0 {
+		ok = l.PostLimit("unusualrefresh", 10)
+		if !ok {
+			return false, &getphone
+		}
 		ok, token = l.ReturnToken()
 		urlPath = fmt.Sprintf("https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token=%s", token)
 		PhoneResp, err = httpc.Do(context.Background(), http.MethodPost, urlPath, GetPhone{Code: code})
