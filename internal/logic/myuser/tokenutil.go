@@ -30,7 +30,6 @@ type TokenUtilLogic struct {
 	logx.Logger
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
-	tul    *TokenUtilLogic
 }
 
 func NewTokenUtilLogic(ctx context.Context, svcCtx *svc.ServiceContext) *TokenUtilLogic {
@@ -38,7 +37,6 @@ func NewTokenUtilLogic(ctx context.Context, svcCtx *svc.ServiceContext) *TokenUt
 		Logger: logx.WithContext(ctx),
 		ctx:    ctx,
 		svcCtx: svcCtx,
-		tul:    NewTokenUtilLogic(ctx, svcCtx),
 	}
 }
 func (l *TokenUtilLogic) getJwtToken(secretKey string, iat, seconds int64, openid, phone string) (string, error) {
@@ -108,6 +106,7 @@ func UserBehaviour(ctx context.Context, svcCtx *svc.ServiceContext, behaviour, p
 }
 
 func db2info(Userinfos *cachemodel.Userinfos) (userinfo *types.UserInfo) {
+	userinfo = &types.UserInfo{}
 	userinfo.Gender = Userinfos.Gender
 	userinfo.NickName = Userinfos.NickName
 	userinfo.Avatar = Userinfos.Avatar

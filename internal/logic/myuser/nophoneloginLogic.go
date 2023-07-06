@@ -28,6 +28,7 @@ func NewNophoneloginLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Noph
 func (l *NophoneloginLogic) Nophonelogin(req *types.NoPhoneLoginRes) (resp *types.LoginResp, err error) {
 	loginresp := &types.LoginResp{Code: "10000"}
 	wxmsg, err := l.tul.code2Session(req.LoginCode)
+	//wxmsg.Openid = req.LoginCode
 	if err != nil || wxmsg.Openid == "" {
 		return &types.LoginResp{Code: "4004", Msg: wxmsg.Errmsg}, nil
 	}
