@@ -40,6 +40,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/getphone",
 				Handler: myuser.GetphoneHandler(serverCtx),
 			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/nophonelogin",
+				Handler: myuser.NophoneloginHandler(serverCtx),
+			},
 		},
 		rest.WithPrefix("/user"),
 	)

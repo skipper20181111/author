@@ -18,31 +18,35 @@ type LoginRes struct {
 	Phone     string `json:"phone"`
 }
 
+type NoPhoneLoginRes struct {
+	LoginCode string `json:"loginCode"`
+}
+
 type LoginRp struct {
-	Userinfo     UserInfo `json:"userInfo"`
-	IsNew        int      `json:"isNew"`
-	AccessToken  string   `json:"accessToken"`
-	AccessExpire string   `json:"accessExpire"`
-	RefreshAfter string   `json:"refreshAfter"`
+	Userinfo     *UserInfo `json:"userInfo"`
+	LoginSuccess bool      `json:"loginSuccess"`
+	IsRebund     bool      `json:"isRebund"`
+	IsNew        bool      `json:"isNew"`
+	AccessToken  string    `json:"accessToken"`
 }
 
 type LoginResp struct {
-	Code string  `json:"code"`
-	Msg  string  `json:"msg"`
-	Data LoginRp `json:"data"`
+	Code string   `json:"code"`
+	Msg  string   `json:"msg"`
+	Data *LoginRp `json:"data"`
 }
 
 type GetUserInfoRes struct {
 }
 
 type GetUserInfoRp struct {
-	Userinfo UserInfo `json:"userInfo"`
+	Userinfo *UserInfo `json:"userInfo"`
 }
 
 type GetUserInfoResp struct {
-	Code string        `json:"code"`
-	Msg  string        `json:"msg"`
-	Data GetUserInfoRp `json:"data"`
+	Code string         `json:"code"`
+	Msg  string         `json:"msg"`
+	Data *GetUserInfoRp `json:"data"`
 }
 
 type UpdateUserInfoRes struct {
@@ -54,13 +58,13 @@ type UpdateUserInfoRes struct {
 }
 
 type UpdateUserInfoRp struct {
-	Userinfo UserInfo `json:"userInfo"`
+	Userinfo *UserInfo `json:"userInfo"`
 }
 
 type UpdateUserInfoResp struct {
-	Code string           `json:"code"`
-	Msg  string           `json:"msg"`
-	Data UpdateUserInfoRp `json:"data"`
+	Code string            `json:"code"`
+	Msg  string            `json:"msg"`
+	Data *UpdateUserInfoRp `json:"data"`
 }
 
 type ReboundRes struct {
@@ -68,16 +72,16 @@ type ReboundRes struct {
 }
 
 type ReboundRp struct {
-	Userinfo     UserInfo `json:"userInfo"`
-	AccessToken  string   `json:"accessToken"`
-	AccessExpire string   `json:"accessExpire"`
-	RefreshAfter string   `json:"refreshAfter"`
+	Userinfo     *UserInfo `json:"userInfo"`
+	AccessToken  string    `json:"accessToken"`
+	AccessExpire string    `json:"accessExpire"`
+	RefreshAfter string    `json:"refreshAfter"`
 }
 
 type ReboundResp struct {
-	Code string    `json:"code"`
-	Msg  string    `json:"msg"`
-	Data ReboundRp `json:"data"`
+	Code string     `json:"code"`
+	Msg  string     `json:"msg"`
+	Data *ReboundRp `json:"data"`
 }
 
 type RefreshRes struct {

@@ -24,17 +24,22 @@ type (
 		LoginCode string `json:"loginCode"`
 		Phone     string `json:"phone"`
 	}
+	NoPhoneLoginRes {
+		LoginCode string `json:"loginCode"`
+	}
 	LoginRp {
-		Userinfo     UserInfo `json:"userInfo"`
-		IsNew        int      `json:"isNew"`
-		AccessToken  string   `json:"accessToken"`
-		AccessExpire string   `json:"accessExpire"`
-		RefreshAfter string   `json:"refreshAfter"`
+		Userinfo     *UserInfo `json:"userInfo"`
+		LoginSuccess bool      `json:"loginSuccess"`
+		IsRebund     bool      `json:"isRebund"`
+		IsNew        bool      `json:"isNew"`
+		AccessToken  string    `json:"accessToken"`
+		//		AccessExpire string    `json:"accessExpire"`
+		//		RefreshAfter string    `json:"refreshAfter"`
 	}
 	LoginResp {
-		Code string  `json:"code"`
-		Msg  string  `json:"msg"`
-		Data LoginRp `json:"data"`
+		Code string   `json:"code"`
+		Msg  string   `json:"msg"`
+		Data *LoginRp `json:"data"`
 	}
 )
 
@@ -42,12 +47,12 @@ type (
 	GetUserInfoRes {
 	}
 	GetUserInfoRp {
-		Userinfo UserInfo `json:"userInfo"`
+		Userinfo *UserInfo `json:"userInfo"`
 	}
 	GetUserInfoResp {
-		Code string        `json:"code"`
-		Msg  string        `json:"msg"`
-		Data GetUserInfoRp `json:"data"`
+		Code string         `json:"code"`
+		Msg  string         `json:"msg"`
+		Data *GetUserInfoRp `json:"data"`
 	}
 )
 type (
@@ -59,12 +64,12 @@ type (
 		Region   string `json:"region"`
 	}
 	UpdateUserInfoRp {
-		Userinfo UserInfo `json:"userInfo"`
+		Userinfo *UserInfo `json:"userInfo"`
 	}
 	UpdateUserInfoResp {
-		Code string           `json:"code"`
-		Msg  string           `json:"msg"`
-		Data UpdateUserInfoRp `json:"data"`
+		Code string            `json:"code"`
+		Msg  string            `json:"msg"`
+		Data *UpdateUserInfoRp `json:"data"`
 	}
 )
 
@@ -73,15 +78,15 @@ type (
 		LoginCode string `json:"loginCode"`
 	}
 	ReboundRp {
-		Userinfo     UserInfo `json:"userInfo"`
-		AccessToken  string   `json:"accessToken"`
-		AccessExpire string   `json:"accessExpire"`
-		RefreshAfter string   `json:"refreshAfter"`
+		Userinfo     *UserInfo `json:"userInfo"`
+		AccessToken  string    `json:"accessToken"`
+		AccessExpire string    `json:"accessExpire"`
+		RefreshAfter string    `json:"refreshAfter"`
 	}
 	ReboundResp {
-		Code string    `json:"code"`
-		Msg  string    `json:"msg"`
-		Data ReboundRp `json:"data"`
+		Code string     `json:"code"`
+		Msg  string     `json:"msg"`
+		Data *ReboundRp `json:"data"`
 	}
 )
 type (
@@ -149,6 +154,10 @@ service user-api {
 	@doc "获取手机号"
 	@handler getphone
 	post /getphone (GetPhoneRes) returns (GetPhoneResp)
+	
+	@doc "无手机号登录"
+	@handler nophonelogin
+	post /nophonelogin (NoPhoneLoginRes) returns (LoginResp)
 }
 
 @server(

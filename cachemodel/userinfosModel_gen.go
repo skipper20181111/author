@@ -5,8 +5,8 @@ package cachemodel
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
+	"math/rand"
 	"strings"
 
 	"github.com/zeromicro/go-zero/core/stores/builder"
@@ -16,6 +16,7 @@ import (
 )
 
 var (
+	letters                      = []rune("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	userinfosFieldNames          = builder.RawFieldNames(&Userinfos{})
 	userinfosRows                = strings.Join(userinfosFieldNames, ",")
 	userinfosRowsExpectAutoSet   = strings.Join(stringx.Remove(userinfosFieldNames, "`id`", "`create_time`", "`update_time`", "`create_at`", "`update_at`"), ",")
@@ -26,10 +27,11 @@ type (
 	userinfosModel interface {
 		Insert(ctx context.Context, data *Userinfos) (sql.Result, error)
 		FindOne(ctx context.Context, id uint64) (*Userinfos, error)
+		FindOneByOpenid(ctx context.Context, openid string) (*Userinfos, error)
 		FindOneByPhone(ctx context.Context, phone string) (*Userinfos, error)
 		Update(ctx context.Context, data *Userinfos) error
 		Delete(ctx context.Context, id uint64) error
-		UpdateByPhone(ctx context.Context, phone string, newData *Userinfos) error
+		UnBoundOpenId(ctx context.Context, openid string) error
 	}
 
 	defaultUserinfosModel struct {
@@ -76,6 +78,20 @@ func (m *defaultUserinfosModel) FindOne(ctx context.Context, id uint64) (*Userin
 	}
 }
 
+func (m *defaultUserinfosModel) FindOneByOpenid(ctx context.Context, openid string) (*Userinfos, error) {
+	var resp Userinfos
+	query := fmt.Sprintf("select %s from %s where `openid` = ? limit 1", userinfosRows, m.table)
+	err := m.conn.QueryRowCtx(ctx, &resp, query, openid)
+	switch err {
+	case nil:
+		return &resp, nil
+	case sqlc.ErrNotFound:
+		return nil, ErrNotFound
+	default:
+		return nil, err
+	}
+}
+
 func (m *defaultUserinfosModel) FindOneByPhone(ctx context.Context, phone string) (*Userinfos, error) {
 	var resp Userinfos
 	query := fmt.Sprintf("select %s from %s where `phone` = ? limit 1", userinfosRows, m.table)
@@ -84,7 +100,7 @@ func (m *defaultUserinfosModel) FindOneByPhone(ctx context.Context, phone string
 	case nil:
 		return &resp, nil
 	case sqlc.ErrNotFound:
-		return nil, errors.New("notfind")
+		return nil, ErrNotFound
 	default:
 		return nil, err
 	}
@@ -101,12 +117,23 @@ func (m *defaultUserinfosModel) Update(ctx context.Context, newData *Userinfos) 
 	_, err := m.conn.ExecCtx(ctx, query, newData.NickName, newData.Avatar, newData.Gender, newData.Birthday, newData.Region, newData.Phone, newData.Openid, newData.Id)
 	return err
 }
-func (m *defaultUserinfosModel) UpdateByPhone(ctx context.Context, phone string, newData *Userinfos) error {
-	query := fmt.Sprintf("update %s set %s where `phone` = ?", m.table, userinfosRowsWithPlaceHolder)
-	_, err := m.conn.ExecCtx(ctx, query, newData.NickName, newData.Avatar, newData.Gender, newData.Birthday, newData.Region, newData.Phone, newData.Openid, phone)
+func (m *defaultUserinfosModel) UnBoundOpenId(ctx context.Context, openid string) error {
+	defer func() {
+		if e := recover(); e != nil {
+			return
+		}
+	}()
+	query := fmt.Sprintf("update %s set `openid`=? where `openid` = ?", m.table, userinfosRowsWithPlaceHolder)
+	_, err := m.conn.ExecCtx(ctx, query, randStr(128), openid)
 	return err
 }
-
+func randStr(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
+}
 func (m *defaultUserinfosModel) tableName() string {
 	return m.table
 }
