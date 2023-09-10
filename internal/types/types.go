@@ -125,3 +125,55 @@ type PhoneStruct struct {
 	Errmsg    string     `json:"errmsg"`
 	Phoneinfo *PhoneInfo `json:"phone_info"`
 }
+
+type MsgData struct {
+	OrderKey       *OrderKey       `json:"order_key"`
+	LogisticsType  int64           `json:"logistics_type"`
+	DeliveryMode   int64           `json:"delivery_mode"`
+	IsAllDelivered bool            `json:"is_all_delivered"`
+	ShippingList   []*ShippingList `json:"shipping_list"`
+	UploadTime     string          `json:"upload_time"`
+	Payer          *Payer          `json:"payer"`
+}
+
+type Payer struct {
+	Openid string `json:"openid"`
+}
+
+type OrderKey struct {
+	OrderNumberType int64  `json:"order_number_type"`
+	TransactionId   string `json:"transaction_id"`
+	Mchid           string `json:"mchid"`
+	OutTradeNo      string `json:"out_trade_no"`
+}
+
+type ShippingList struct {
+	TrackingNo     string   `json:"tracking_no"`
+	ExpressCompany string   `json:"express_company"`
+	ItemDesc       string   `json:"item_desc"`
+	Contact        *Contact `json:"contact"`
+}
+
+type Contact struct {
+	ConsignorContact string `json:"consignor_contact"`
+	ReceiverContact  string `json:"receiver_contact"`
+}
+
+type MsgDelivering struct {
+	TransactionId   string `json:"transaction_id"`
+	MerchantId      string `json:"merchant_id"`
+	SubMerchantId   string `json:"sub_merchant_id"`
+	MerchantTradeNo string `json:"merchant_trade_no"`
+}
+
+type MsgReturn struct {
+	Errcode int64  `json:"errcode"`
+	Errmsg  string `json:"errmsg"`
+	Order   *Order `json:"order"`
+}
+
+type Order struct {
+	TransactionId string `json:"transaction_id"`
+	OrderState    int64  `json:"order_state"`
+	Openid        string `json:"openid"`
+}

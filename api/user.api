@@ -186,3 +186,56 @@ service user-api {
 	@handler rebound
 	post /rebound (ReboundRes) returns (ReboundResp)
 }
+
+type (
+	MsgData {
+		OrderKey      *OrderKey `json:"order_key"`
+		LogisticsType int64     `json:"logistics_type"`
+		//物流模式，发货方式枚举值：1、实体物流配送采用快递公司进行实体物流配送形式 2、同城配送 3、虚拟商品，虚拟商品，例如话费充值，点卡等，无实体配送形式 4、用户自提
+		DeliveryMode int64 `json:"delivery_mode"`
+		//	发货模式，发货模式枚举值：1、UNIFIED_DELIVERY（统一发货）2、SPLIT_DELIVERY（分拆发货） 示例值: UNIFIED_DELIVERY
+		IsAllDelivered bool `json:"is_all_delivered"`
+		//	分拆发货模式时必填，用于标识分拆发货模式下是否已全部发货完成，只有全部发货完成的情况下才会向用户推送发货完成通知。示例值: true/false
+		ShippingList []*ShippingList `json:"shipping_list"`
+		//	物流信息列表，发货物流单列表，支持统一发货（单个物流单）和分拆发货（多个物流单）两种模式，多重性: [1, 10]
+		UploadTime string `json:"upload_time"`
+		Payer      *Payer `json:"payer"`
+	}
+	Payer {
+		Openid string `json:"openid"`
+	}
+	OrderKey {
+		OrderNumberType int64  `json:"order_number_type"`
+		TransactionId   string `json:"transaction_id"`
+		Mchid           string `json:"mchid"`
+		OutTradeNo      string `json:"out_trade_no"`
+	}
+	ShippingList {
+		TrackingNo     string   `json:"tracking_no"`
+		ExpressCompany string   `json:"express_company"`
+		ItemDesc       string   `json:"item_desc"`
+		Contact        *Contact `json:"contact"`
+	}
+	Contact {
+		ConsignorContact string `json:"consignor_contact"`
+		ReceiverContact  string `json:"receiver_contact"`
+	}
+)
+type (
+	MsgDelivering {
+		TransactionId   string `json:"transaction_id"`
+		MerchantId      string `json:"merchant_id"`
+		SubMerchantId   string `json:"sub_merchant_id"`
+		MerchantTradeNo string `json:"merchant_trade_no"`
+	}
+	MsgReturn {
+		Errcode int64  `json:"errcode"`
+		Errmsg  string `json:"errmsg"`
+		Order   *Order `json:"order"`
+	}
+	Order {
+		TransactionId string `json:"transaction_id"`
+		OrderState    int64  `json:"order_state"`
+		Openid        string `json:"openid"`
+	}
+)
