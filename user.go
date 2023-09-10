@@ -14,6 +14,7 @@ import (
 	"github.com/zeromicro/go-zero/rest"
 	"github.com/zeromicro/go-zero/rest/httpc"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"time"
 )
@@ -60,7 +61,8 @@ type ForceRefresh struct {
 
 func wxnmsl(svcCtx *svc.ServiceContext) {
 	for true {
-		time.Sleep(time.Second * 5)
+		RefreshGap := time.Second * time.Duration(rand.Intn(10)+1)
+		time.Sleep(RefreshGap)
 		wxDeliveries, _ := svcCtx.WxDelivery.FindAll(context.Background())
 		for _, wxDelivery := range wxDeliveries {
 			giveMHTshit(svcCtx, wxDelivery)
