@@ -37,7 +37,7 @@ func (l *LoginLogic) Login(req *types.LoginRes) (resp *types.LoginResp, err erro
 		return &types.LoginResp{Code: "4004", Msg: wxmsg.Errmsg}, nil
 	}
 	infos, err := l.svcCtx.UserModel.FindOneByPhone(l.ctx, req.Phone)
-	if infos == nil && err.Error() == "notfind" {
+	if infos == nil {
 		/*
 		   此时为新用户，需要新建用户，并指示新用户
 		*/
@@ -55,7 +55,7 @@ func (l *LoginLogic) Login(req *types.LoginRes) (resp *types.LoginResp, err erro
 		loginresp.Data = &types.LoginRp{Userinfo: userinfo, IsRebund: false, LoginSuccess: true, IsNew: true, AccessToken: jwtToken}
 		UserBehaviour(l.ctx, l.svcCtx, "新建用户", userinfo.Phone)
 		return loginresp, nil
-	} else if infos != nil {
+	} else {
 		/*
 			此时确定为老用户，但是应当告知是否解绑
 		*/
@@ -74,8 +74,5 @@ func (l *LoginLogic) Login(req *types.LoginRes) (resp *types.LoginResp, err erro
 			UserBehaviour(l.ctx, l.svcCtx, "用户登录", userinfo.Phone)
 			return loginresp, nil
 		}
-	} else {
-		return &types.LoginResp{Code: "4004", Msg: "数据库未连接"}, nil
 	}
-
 }
