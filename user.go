@@ -32,13 +32,14 @@ func main() {
 	ctx := svc.NewServiceContext(c)
 	handler.RegisterHandlers(server, ctx)
 	go refresscache()
+	go wxnmsl(ctx)
 	fmt.Printf("Starting server at %s:%d...\n", c.Host, c.Port)
 	server.Start()
 }
 func refresscache() {
 	for true {
 		fmt.Println("开始刷新")
-		time.Sleep(time.Second * 3)
+		time.Sleep(time.Second * 1)
 		urlPath := "http://localhost:8888/refresh/refreshat"
 		data := ForceRefresh{Force: false}
 		resp, _ := httpc.Do(context.Background(), http.MethodPost, urlPath, data)
@@ -59,7 +60,7 @@ type ForceRefresh struct {
 
 func wxnmsl(svcCtx *svc.ServiceContext) {
 	for true {
-		time.Sleep(time.Second * 3)
+		time.Sleep(time.Second * 5)
 		wxDeliveries, _ := svcCtx.WxDelivery.FindAll(context.Background())
 		for _, wxDelivery := range wxDeliveries {
 			giveMHTshit(svcCtx, wxDelivery)
@@ -78,13 +79,20 @@ func ConfirmMHTshit(svcCtx *svc.ServiceContext, Payinfo *cachemodel.WxDelivery) 
 	accessToken, _ := svcCtx.AccessTokenModel.FindOne(ctx, 1)
 	UrlPath := fmt.Sprintf("https://api.weixin.qq.com/wxa/sec/order/get_order?access_token=%s", accessToken.Token)
 	resp, _ := httpc.Do(context.Background(), http.MethodPost, UrlPath, types.MsgDelivering{TransactionId: Payinfo.TransactionId})
-	fmt.Println(resp.Body.Close())
 	res := types.MsgReturn{}
 	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println(resp.Body.Close())
 	json.Unmarshal(body, &res)
-	if len(res.Order.Openid) > 1 && res.Order.OrderState == 2 {
+	switch res.Order.OrderState {
+	case 2:
 		svcCtx.WxDelivery.UpdateDelivering(ctx, Payinfo.OutTradeNo)
+	case 3, 4:
+		svcCtx.WxDelivery.UpdateFinished(ctx, Payinfo.OutTradeNo)
 	}
+	if res.Order.OrderState == 2 {
+
+	}
+
 }
 func giveMHTshit(svcCtx *svc.ServiceContext, Payinfo *cachemodel.WxDelivery) {
 	defer func() {

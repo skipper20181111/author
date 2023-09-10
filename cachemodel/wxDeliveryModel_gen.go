@@ -31,6 +31,7 @@ type (
 		Delete(ctx context.Context, id int64) error
 		FindAll(ctx context.Context) ([]*WxDelivery, error)
 		UpdateDelivering(ctx context.Context, OutTradeSn string) error
+		UpdateFinished(ctx context.Context, OutTradeSn string) error
 	}
 
 	defaultWxDeliveryModel struct {
@@ -128,6 +129,11 @@ func (m *defaultWxDeliveryModel) Update(ctx context.Context, newData *WxDelivery
 
 func (m *defaultWxDeliveryModel) UpdateDelivering(ctx context.Context, OutTradeSn string) error {
 	query := fmt.Sprintf("update %s set  `status`=10000 where `out_trade_no` = ?", m.table)
+	_, err := m.conn.ExecCtx(ctx, query, OutTradeSn)
+	return err
+}
+func (m *defaultWxDeliveryModel) UpdateFinished(ctx context.Context, OutTradeSn string) error {
+	query := fmt.Sprintf("update %s set  `status`=90000 where `out_trade_no` = ?", m.table)
 	_, err := m.conn.ExecCtx(ctx, query, OutTradeSn)
 	return err
 }
