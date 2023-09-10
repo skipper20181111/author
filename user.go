@@ -65,6 +65,7 @@ func wxnmsl(svcCtx *svc.ServiceContext) {
 			giveMHTshit(svcCtx, wxDelivery)
 			ConfirmMHTshit(svcCtx, wxDelivery)
 		}
+		time.Sleep(time.Second * 50)
 	}
 }
 func ConfirmMHTshit(svcCtx *svc.ServiceContext, Payinfo *cachemodel.WxDelivery) {
