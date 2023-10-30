@@ -1,6 +1,7 @@
 package myuser
 
 import (
+	"author/cachemodel"
 	"author/internal/svc"
 	"author/internal/types"
 	"context"
@@ -34,6 +35,11 @@ func (l *GetinfoLogic) Getinfo(req *types.GetUserInfoRes) (resp *types.GetUserIn
 		userinfo.AvailablePoints = point.AvailablePoints
 		userinfo.HistoryPoints = point.HistoryPoints
 	} else {
+		l.svcCtx.UserPointsModel.Insert(l.ctx, &cachemodel.UserPoints{
+			AvailablePoints: 0,
+			HistoryPoints:   0,
+			Phone:           UserPhone,
+		})
 		userinfo.AvailablePoints = 0
 		userinfo.HistoryPoints = 0
 	}

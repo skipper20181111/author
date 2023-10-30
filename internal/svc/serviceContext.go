@@ -19,7 +19,6 @@ type ServiceContext struct {
 	UserPointsModel    cachemodel.UserPointsModel
 	ErrLog             cachemodel.ErrLogModel
 	LocalCache         *collection.Cache
-	WxDelivery         cachemodel.WxDeliveryModel
 	Order              cachemodel.OrderModel
 }
 
@@ -35,7 +34,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		AccessTokenModel:   cachemodel.NewAccessTokenModel(sqlx.NewMysql(c.DB.DataSource)),
 		UserPointsModel:    cachemodel.NewUserPointsModel(sqlx.NewMysql(c.DB.DataSource)),
 		ErrLog:             cachemodel.NewErrLogModel(sqlx.NewMysql(c.DB.DataSource)),
-		WxDelivery:         cachemodel.NewWxDeliveryModel(sqlx.NewMysql(c.DB.DataSource)),
 		LocalCache:         localCache,
 		Order:              cachemodel.NewOrderModel(sqlx.NewMysql(c.DB.DataSource)),
 	}
